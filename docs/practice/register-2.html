@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Register Step 2</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; overflow-x: auto; }
+  table.plain td { padding: 4px 6px; vertical-align: middle; }
+  table.plain input:not([type=checkbox]) { width: 280px; max-width: 100%; } table.plain select { width: auto; }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Division</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main>
+  <form onsubmit="event.preventDefault(); document.getElementById('done').hidden=false; document.body.dataset.submitted='yes';">
+    <h2>Create your password</h2>
+    <table class="plain"><tbody>
+      <tr><td><label for="pw">Password</label></td><td><input type="password" id="pw" name="pw" required></td></tr>
+      <tr><td><label for="pw2">Confirm Password</label></td><td><input type="password" id="pw2" name="pw2" required></td></tr>
+      <tr><td></td><td><label><input type="checkbox" name="tos" required> I agree to the terms of use</label></td></tr>
+    </tbody></table>
+    <p><button type="submit" class="button">Create Account</button></p>
+    <div id="done" class="msg" hidden>Practice account “created” — nothing was sent anywhere. <a href="apply.html">Continue to the practice application →</a></div>
+  </form>
+</main>
+</body>
+</html>

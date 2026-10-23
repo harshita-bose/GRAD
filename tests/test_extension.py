@@ -133,33 +133,38 @@ def main():
             await chrome.storage.local.set({ tracker }); }""")
         expect(page.locator(".app")).to_have_count(1)
 
-        # --- registration page (like UCI's)
+        # --- registration page, built like UCI's: one click fills what GradFill is sure about
         page.goto(base + "/practice/register.html")
         open_gradfill(sw)
-        expect(panel(page)).to_be_visible()
+        expect(panel(page).locator(".msg.good")).to_contain_text("Filled and checked 6 field(s)")
         expect(panel(page).locator("select").first).to_have_value(stored["applications"][0]["id"])  # auto-linked
-        assert card(page, "Email Address").get_attribute("class") == "card ok"
-        assert "manual" in card(page, "Password").get_attribute("class")
-        assert "manual" in card(page, "Confirm Password").get_attribute("class")
-        assert "manual" in card(page, "I agree").get_attribute("class")
-        bd = panel(page).locator(".card").filter(has_text="Birthdate")
-        assert bd.count() == 3 and all("flag" in bd.nth(i).get_attribute("class") for i in range(3))
-        assert "flag" in card(page, "Country of Citizenship").get_attribute("class")
-        for i in range(3):
-            bd.nth(i).locator("input[type=checkbox]").check()  # the user reviews the flagged rows
-        card(page, "Country of Citizenship").locator("input[type=checkbox]").check()
-        panel(page).locator("button", has_text="Fill").click()
-        expect(panel(page).locator(".msg.good")).to_be_visible()
         assert page.input_value("#email") == "test@example.com"
-        assert (page.input_value("#bm"), page.input_value("[name=bd]"), page.input_value("[name=by]")) == ("5", "17", "2003")
-        assert page.input_value("#cit") == "IN"
-        assert page.input_value("#pw") == "" and not page.is_checked("[name=tos]")
+        assert (page.input_value("#first"), page.input_value("#last")) == ("Test", "Applicant")
+        assert (page.input_value("#birthdate"), page.input_value("[name=birthdate_d]"),
+                page.input_value("[name=birthdate_y]")) == ("05", "17", "2003")
+        assert card(page, "Email Address").get_attribute("class") == "card ok"
+        bd = panel(page).locator(".card").filter(has_text="Birthdate")
+        assert bd.count() == 3 and all(bd.nth(i).get_attribute("class") == "card verify" for i in range(3))
+        outline = page.evaluate("document.getElementById('birthdate').style.outline")
+        assert "solid" in outline and "232, 164, 0" in outline, outline  # amber = filled, please double-check
         assert panel(page).locator(".res.bad").count() == 0
+        if os.environ.get("GF_SHOTS"):
+            page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "register.png"))
+        page.click("text=Continue")  # the user moves on; GradFill never does
+        page.wait_for_url("**/register-2.html")
+        open_gradfill(sw)
+        expect(panel(page)).to_be_visible()
+        for label in ["Password", "Confirm Password", "I agree"]:
+            assert "manual" in card(page, label).get_attribute("class"), label
+        assert page.input_value("#pw") == "" and page.input_value("#pw2") == "" and not page.is_checked("[name=tos]")
 
         # --- application page
         page.goto(base + "/practice/apply.html")
         open_gradfill(sw)
-        expect(panel(page)).to_be_visible()
+        expect(panel(page).locator(".msg.good")).to_contain_text("NOT filled")
+        assert page.input_value("#ctry") == "" and page.input_value("#city") == ""  # uncertain: waits for you
+        assert "dashed" in page.evaluate("document.getElementById('ctry').style.outline")
+        assert page.input_value("#a1") == "1 Main Rd" and page.is_checked("[name=usc][value=N]")  # sure: filled
         assert "none" in card(page, "Street Address Line 2").get_attribute("class")  # empty → not guessed
         assert "Closest option" in card(page, "Country").inner_text()
         assert "manual" in card(page, "Hispanic").get_attribute("class")
@@ -198,7 +203,7 @@ def main():
 
         # activity logged to the tracker (the app is linked by the portal's hostname)
         acts = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[0]")
-        assert acts["status"] == "In progress" and len(acts["activity"]) == 2, acts
+        assert acts["status"] == "In progress" and len(acts["activity"]) == 3, acts
         page.goto(base + "/index.html")
         expect(page.locator(".app .last")).to_contain_text("Filled")
         if os.environ.get("GF_SHOTS"):

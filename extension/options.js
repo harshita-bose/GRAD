@@ -127,6 +127,13 @@ document.getElementById("import").addEventListener("change", async e => {
 });
 window.addEventListener("beforeunload", e => { if (dirty) e.preventDefault(); });
 
+const auto = document.getElementById("autoFill");
+auto.addEventListener("change", async () => {
+  await chrome.storage.local.set({ settings: { autoFill: auto.checked } });
+  statusEl.textContent = auto.checked ? "GradFill will fill sure fields when you click it" : "GradFill will wait for you to press Fill";
+});
+chrome.storage.local.get("settings").then(got => { auto.checked = (got.settings || {}).autoFill !== false; });
+
 chrome.storage.local.get("profile").then(got => {
   profile = normalise(got.profile);
   build();

@@ -115,6 +115,7 @@
   }
 
   // ---------- plan ----------
+  const FILLABLE = new Set(["ok", "verify", "flag"]);
   function resolve(key) {
     let parts = key.split(".");
     if (parts[0] === "*") {
@@ -182,7 +183,7 @@
 
   function planField(f) {
     const label = f.label || f.name || "(unlabelled field)";
-    const row = { f, label, key: null, value: "", status: "none", notes: [], approved: false, list: null };
+    const row = { f, label, key: null, value: "", status: "none", notes: [], soft: [], approved: false, list: null };
     if (f.type === "password") return { ...row, status: "manual", notes: ["Password — always typed by you"] };
     const why = manualReason(label) || (f.options && f.group ? f.options.map(o => manualReason(o.text)).find(Boolean) : null);
     if (why) return { ...row, status: "manual", notes: [`Never filled by GradFill: ${why}`] };
@@ -217,8 +218,10 @@
       if (d.value) value = candidates[0] = d.value;
       if (!d.value && !d.candidates) { row.notes = notes; return row; }
     }
-    if (/confirm|re-?enter|verify|again/i.test(label)) notes.push("Confirmation field — check it matches the field above");
-    if (GF.ALWAYS_CHECK.has(row.key.replace(/\.\d+\./, ".*."))) notes.push("Legal / immigration detail — double-check");
+    // "soft" notes: the value is certain but worth a second look; the row is still filled
+    const soft = [];
+    if (/confirm|re-?enter|verify|again/i.test(label)) soft.push("Confirmation field — check it matches the field above");
+    if (GF.ALWAYS_CHECK.has(row.key.replace(/\.\d+\./, ".*."))) soft.push("Important detail — please double-check it on the page");
 
     if (f.options) {
       const { opt, exact } = bestOption(f.options, candidates);
@@ -234,13 +237,13 @@
     } else {
       if (f.maxlength && value.length > f.maxlength) notes.push(`${value.length} characters but the field allows ${f.maxlength} — it would be cut off`);
       if (f.current && norm(f.current) !== norm(value)) notes.push(`Already contains "${f.current}" — will be replaced`);
-      if (f.current && norm(f.current) === norm(value)) notes.push("Already filled with this value");
+      if (f.current && norm(f.current) === norm(value)) soft.push("Already filled with this value");
     }
     if (f.tag === "select" && f.current && f.options.find(o => o.value === f.current && clean(o.text)) && row.option && row.option.value !== f.current)
       notes.push(`Currently "${f.options.find(o => o.value === f.current).text}" — will be changed`);
 
-    Object.assign(row, { value, notes, status: notes.length ? "flag" : "ok" });
-    row.approved = row.status === "ok";
+    Object.assign(row, { value, notes, soft, status: notes.length ? "flag" : soft.length ? "verify" : "ok" });
+    row.approved = row.status !== "flag";
     return row;
   }
 
@@ -287,14 +290,16 @@
     return f.el.value;
   }
 
-  function mark(el, color) {
+  const COLORS = { ok: "#1f9d55", verify: "#e8a400", bad: "#d93025", flag: "#e8a400", find: "#2a5bd7" };
+  const elOf = r => (r.f.group ? (r.option || r.f.options[0]).el : r.f.el);
+  function mark(el, color, dashed) {
     const target = el.type === "radio" ? el.closest("fieldset, .form_question, label") || el : el;
-    target.style.outline = color ? `2px solid ${color}` : "";
+    target.style.outline = color ? `2px ${dashed ? "dashed" : "solid"} ${color}` : "";
     target.style.outlineOffset = color ? "2px" : "";
   }
 
   async function fillApproved() {
-    const todo = S.rows.filter(r => r.approved && (r.status === "ok" || r.status === "flag") && r.value !== "");
+    const todo = S.rows.filter(r => r.approved && FILLABLE.has(r.status) && r.value !== "");
     let ok = 0, bad = 0;
     for (const r of todo) {
       r.error = fillRow(r);
@@ -302,9 +307,10 @@
       r.result = { actual, ok: !r.error && norm(actual) === norm(r.value) };
       r.result.ok ? ok++ : bad++;
       if (r.result.ok) r.approved = false; // done: don't offer to fill it again
-      const el = r.f.group ? (r.option || r.f.options[0]).el : r.f.el;
-      mark(el, r.result.ok ? "#1f9d55" : "#d93025");
+      mark(elOf(r), !r.result.ok ? COLORS.bad : r.status === "ok" ? COLORS.ok : COLORS.verify);
     }
+    // fields waiting for your decision get a dashed outline so you can spot them on the page
+    for (const r of S.rows) if (r.status === "flag" && !r.result) mark(elOf(r), COLORS.flag, true);
     S.filledOnce = true;
     const newFields = scan().length - S.rows.length;
     await logActivity(ok, bad);
@@ -377,7 +383,9 @@
     .bar label { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 8px; font-size: 13px; }
     select, input[type=text] { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #c9d0dc; border-radius: 6px; font: inherit; background: #fff; color: #1d2433; }
     .card { border: 1px solid #d9dee7; border-left-width: 4px; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
-    .card.ok { border-left-color: #1f9d55; } .card.flag { border-left-color: #e8a400; }
+    .card.ok { border-left-color: #1f9d55; } .card.verify { border-left-color: #e8a400; }
+    .card.flag { border-left-color: #e8a400; border-left-style: dashed; }
+    .soft { font-size: 12px; margin: 4px 0 0; color: #5b6475; }
     .card.manual, .card.upload { border-left-color: #6b4fbb; } .card.none { border-left-color: #9aa3b2; }
     .top { display: flex; gap: 8px; align-items: flex-start; }
     .top .lbl { flex: 1; font-weight: 600; cursor: pointer; }
@@ -442,8 +450,9 @@
 
     const c = k => S.rows.filter(r => r.status === k).length;
     body.append(h("p", { class: "muted" },
-      `${S.rows.length} fields · ${c("ok")} ready · ${c("flag")} need your check · ${c("manual") + c("upload")} for you to do · ${c("none")} not in your details. ` +
-      "Ticked rows will be filled. Nothing is filled until you press the button below."));
+      `${S.rows.length} fields · ${c("ok") + c("verify")} sure · ${c("flag")} need your decision · ${c("manual") + c("upload")} for you to do · ${c("none")} not in your details. ` +
+      (S.autoFill ? "GradFill fills the fields it is sure about when you click its icon; ticked rows are filled again when you press the button below."
+        : "Ticked rows will be filled. Nothing is filled until you press the button below.")));
 
     for (const r of S.rows) body.append(card(r));
 
@@ -456,8 +465,8 @@
   }
 
   function card(r) {
-    const fillable = r.status === "ok" || r.status === "flag";
-    const badge = { ok: "ready", flag: "check", manual: "you", upload: "upload", none: "skip" }[r.status];
+    const fillable = FILLABLE.has(r.status);
+    const badge = { ok: "ready", verify: "verify", flag: "decide", manual: "you", upload: "upload", none: "skip" }[r.status];
     const box = fillable ? h("input", { type: "checkbox", "aria-label": `Fill ${r.label}`, checked: r.approved,
       onchange: e => { r.approved = e.target.checked; render(); } }) : null;
     const lbl = h("span", { class: "lbl", title: "Show on page", onclick: () => locate(r) }, r.label, r.f.required ? " *" : "");
@@ -483,6 +492,7 @@
       el.append(h("div", { class: "val" }, input));
     }
     for (const n of r.notes) el.append(h("p", { class: "note" }, "⚠ ", n));
+    for (const n of r.soft || []) el.append(h("p", { class: "soft" }, "ⓘ ", n));
     if (r.result) el.append(h("p", { class: `res ${r.result.ok ? "ok" : "bad"}` },
       r.result.ok ? `✓ Checked: page shows "${r.result.actual}"` : `✗ ${r.error || `Page shows "${r.result.actual}", expected "${r.value}"`}`));
     return el;
@@ -491,8 +501,8 @@
   function locate(r) {
     const el = r.f.group ? r.f.options[0].el : r.f.el;
     el.scrollIntoView({ block: "center", behavior: "smooth" });
-    mark(el, "#2a5bd7");
-    setTimeout(() => { if (!r.result) mark(el, ""); }, 1800);
+    mark(el, COLORS.find);
+    setTimeout(() => { if (!r.result) mark(el, r.status === "flag" ? COLORS.flag : "", r.status === "flag"); }, 1800);
   }
 
   function guardBox() {
@@ -509,17 +519,21 @@
   }
 
   function replan() {
-    S.rows.forEach(r => { if (r.result) mark(r.f.group ? (r.option || r.f.options[0]).el : r.f.el, ""); });
+    S.rows.forEach(r => mark(elOf(r), ""));
     plan();
     render();
   }
 
   async function doFill() {
     const { ok, bad, newFields } = await fillApproved();
+    const waiting = S.rows.filter(r => r.status === "flag" && !r.result).length;
+    const yours = S.rows.filter(r => (r.status === "manual" || r.status === "upload") && r.f.required).length;
     const msg = h("div", { class: `msg ${bad ? "err" : "good"}` },
-      `Filled and checked ${ok} field(s)${bad ? `; ${bad} problem(s) — see the red ✗ rows` : ""}. `,
+      `Filled and checked ${ok} field(s) — green outline on the page, amber means please double-check${bad ? `; ${bad} problem(s) — see the red ✗ rows` : ""}. `,
+      waiting ? h("b", {}, `${waiting} field(s) with a dashed outline were NOT filled — decide on them below. `) : "",
+      yours ? `${yours} required field(s) are yours to fill (e.g. password). ` : "",
       newFields ? `${newFields} new question(s) appeared — press “Rescan page”. ` : "",
-      "Now read the page yourself. When you are happy, click the site's own Save / Next button, then open GradFill again on the next page.");
+      "Read the page yourself, then click the site's own Continue / Next button and open GradFill again on the next page.");
     render(msg);
     panel.querySelector(".body").scrollTop = 0;
   }
@@ -530,7 +544,8 @@
   };
 
   async function load() {
-    const got = await chrome.storage.local.get(["profile", "tracker"]);
+    const got = await chrome.storage.local.get(["profile", "tracker", "settings"]);
+    S.autoFill = (got.settings || {}).autoFill !== false; // on unless you turn it off in settings
     S.profile = got.profile || null;
     S.tracker = got.tracker || null;
     S.appId = matchApp();
@@ -540,6 +555,15 @@
     if (!host.isConnected) document.documentElement.append(host);
   }
 
-  window.__gradfill = { show: () => { show(); replan(); }, state: S, fill: doFill, render };
-  load().then(() => { plan(); show(); render(); });
+  const hasProfile = () => S.profile && Object.values(S.profile.personal || {}).some(Boolean);
+  // Clicking the icon = scan, and (unless turned off) fill the fields GradFill is sure about.
+  async function start() {
+    await load();
+    S.rows.forEach(r => mark(elOf(r), ""));
+    plan();
+    show();
+    if (S.autoFill && hasProfile()) await doFill(); else render();
+  }
+  window.__gradfill = { show: start, state: S, fill: doFill, render };
+  start();
 })();

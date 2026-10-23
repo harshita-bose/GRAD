@@ -36,20 +36,21 @@ program page"** until you tick *confirmed* in Edit. Tick items off straight from
 
 ## Fill an application page
 
-1. Log in to the portal yourself and open a form page.
-2. Click the **GradFill icon**. A panel lists every field on the page:
-   - **ready** (green): clean match, ticked.
-   - **check** (amber): something is uncertain, and each one is explained. It is **not ticked** until you tick it.
-   - **you** (purple): never filled by GradFill. These are passwords, CAPTCHAs, demographics,
-     conduct questions, agreements and certifications, payments and fee waivers, and checkboxes.
-   - **upload** (purple): it tells you which document is wanted. You attach it yourself.
-   - **skip** (grey): not in your details. You can type a value to use.
-   Click a field's name to scroll to it on the page. Edit any value in the panel. For pages
-   about a degree, job or recommender, pick which entry to use at the top.
-3. Press **Fill N ticked fields**. GradFill fills only those, then reads each one back: ✓ means
-   the page holds what you approved, ✗ means it doesn't.
-4. Read the page yourself, then click the site's own **Save / Next** button. Open GradFill again
-   on the next page. It does nothing until you do.
+1. Log in to the portal yourself (or open its registration page) and go to a form page.
+2. Click the **GradFill icon**. It immediately fills every field it is **sure** about, and reads each one
+   back to check it:
+   - **green outline**: filled and checked.
+   - **amber outline**: filled, but an important detail (birthdate, citizenship, visa…). Double-check it.
+   - **dashed outline**: **not filled**. GradFill has a doubt (uncertain label, inexact dropdown
+     option, assumed date format, the field already holds something else…). The panel explains the
+     doubt. Tick the row, or edit its value, and press **Fill** to use it. Otherwise fill it yourself.
+   - Never filled: passwords, CAPTCHAs, demographics, conduct questions, agreements and certifications,
+     payments, checkboxes and file uploads. The panel lists them for you.
+3. Read the page, then click the site's own **Continue / Next** yourself. Click GradFill again on the
+   next page.
+
+Prefer to approve everything before anything is typed? In GradFill settings, turn off
+**"Fill the fields GradFill is sure about straight away"**.
 
 **Submit / Pay / Certify buttons are blocked** on any page where GradFill is open. To submit, type the
 school's name in the unlock box at the bottom of the panel, then click Submit yourself.
@@ -58,7 +59,7 @@ school's name in the unlock box at the bottom of the panel, then click Submit yo
 
 The practice portal is built like Slate, the platform UCI and many other schools use. Nothing typed
 there is sent anywhere:
-- https://harshita-bose.github.io/GRAD/practice/register.html (account registration, with a 3-part birthdate)
+- https://harshita-bose.github.io/GRAD/practice/register.html (built like the UCI registration page: email, names, 3-part birthdate, Continue)
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
 
 ## Known limits
