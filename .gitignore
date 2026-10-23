@@ -1,0 +1,6 @@
+# personal data — never commit
+profile.yaml
+logs/
+.browser-profile/
+documents/
+__pycache__/

@@ -1,0 +1,89 @@
+# Copy this file to profile.yaml (git-ignored) and fill it in.
+# Conventions:
+#   - Dates are ISO: YYYY-MM-DD (the tool converts them to whatever a form asks for).
+#   - Leave a value as "" if it does not apply; the tool will flag it, never guess it.
+#   - Write names EXACTLY as they appear in your passport.
+
+personal:
+  first_name: ""
+  middle_name: ""
+  last_name: ""
+  preferred_name: ""
+  former_names: ""
+  date_of_birth: ""          # YYYY-MM-DD
+  sex: ""                    # as on passport; always flagged for your review
+  pronouns: ""
+
+contact:
+  email: ""
+  alternate_email: ""
+  phone: ""                  # include country code, e.g. +91 98xxxxxxxx
+  address:
+    line1: ""
+    line2: ""
+    city: ""
+    state: ""
+    postal_code: ""
+    country: "India"
+
+citizenship:
+  country_of_citizenship: "India"
+  country_of_birth: "India"
+  city_of_birth: ""
+  us_citizen: "No"
+  us_permanent_resident: "No"
+  visa_required: "Yes"
+  visa_type: "F-1"
+
+program:                     # per-school overrides go in schools.yaml
+  term: ""                   # e.g. "Fall 2027"
+  degree: ""                 # e.g. "MS" / "PhD"
+  program_name: ""
+  area_of_interest: ""
+  faculty_of_interest: ""
+
+education:                   # most recent first; select entry with `ctx education N`
+  - institution: "Delhi Technological University"
+    city: "Delhi"
+    country: "India"
+    degree: ""               # e.g. "B.Tech"
+    major: ""
+    start_date: ""
+    end_date: ""             # expected date if not yet graduated
+    status: ""               # "Completed" / "In progress"
+    gpa: ""                  # exactly as on your transcript — the tool never converts scales
+    gpa_scale: ""            # e.g. "10"
+
+tests:
+  toefl: {total: "", reading: "", listening: "", speaking: "", writing: "", date: "", registration_number: ""}
+  ielts: {overall: "", reading: "", listening: "", speaking: "", writing: "", date: "", trf_number: ""}
+  gre:   {verbal: "", quantitative: "", writing: "", date: "", registration_number: ""}
+  duolingo: {score: "", date: ""}
+
+employment:                  # select entry with `ctx employment N`
+  - employer: ""
+    title: ""
+    city: ""
+    country: ""
+    start_date: ""
+    end_date: ""
+    description: ""
+
+recommenders:                # select entry with `ctx recommenders N`
+  - prefix: ""
+    first_name: ""
+    last_name: ""
+    title: ""
+    institution: ""
+    email: ""
+    phone: ""
+    relationship: ""
+
+documents:                   # absolute paths on YOUR computer
+  cv: ""
+  statement_of_purpose: ""
+  personal_history: ""
+  transcript: ""
+
+misc:
+  how_did_you_hear: ""
