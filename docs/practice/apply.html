@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Application</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  .form_question { margin-bottom: 14px; } .form_label { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .form_responses select.part { width: auto; display: inline-block; margin-right: 6px; }
+  fieldset { border: 0; padding: 0; margin: 0 0 14px; } fieldset label { margin-right: 14px; }
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+  #done { display: none; }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Admissions</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main>
+  <form id="f" onsubmit="event.preventDefault(); document.getElementById('done').style.display='block'; document.body.dataset.submitted='yes';">
+    <h2>Application — Personal &amp; Academic</h2>
+  <div class="form_question"><div class="form_label"><label for="middle">Middle Name</label></div>
+    <div class="form_responses"><input id="middle" name="middle" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="phone">Mobile Phone <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="phone" name="phone" type="tel" maxlength='15'></div></div>
+  <div class="form_question"><div class="form_label"><label for="a1">Street Address Line 1 <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="a1" name="a1" type="text" required></div></div>
+  <div class="form_question"><div class="form_label"><label for="a2">Street Address Line 2</label></div>
+    <div class="form_responses"><input id="a2" name="a2" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="city">City <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="city" name="city" type="text" required></div></div>
+  <div class="form_question"><div class="form_label"><label for="zip">Postal Code <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="zip" name="zip" type="text" required></div></div>
+  <div class="form_question"><div class="form_label"><label for="ctry">Country <span class="req">*</span></label></div>
+    <div class="form_responses"><select id="ctry" name="ctry" required><option value=""></option><option>India (IN)</option><option>Nepal</option><option>United States</option></select></div></div>
+    <fieldset><legend>Are you a U.S. citizen? <span class="req">*</span></legend>
+      <label><input type="radio" name="usc" value="Y" required> Yes</label><label><input type="radio" name="usc" value="N"> No</label></fieldset>
+    <fieldset><legend>Are you Hispanic or Latino?</legend>
+      <label><input type="radio" name="hisp" value="Y"> Yes</label><label><input type="radio" name="hisp" value="N"> No</label></fieldset>
+    <h2>Most recent institution</h2>
+  <div class="form_question"><div class="form_label"><label for="inst">Institution Name <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="inst" name="inst" type="text" required></div></div>
+  <div class="form_question"><div class="form_label"><label for="major">Major / Field of Study</label></div>
+    <div class="form_responses"><input id="major" name="major" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="from">Dates Attended From (MM/YYYY)</label></div>
+    <div class="form_responses"><input id="from" name="from" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="to">Dates Attended To (MM/YYYY)</label></div>
+    <div class="form_responses"><input id="to" name="to" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="gpa">Cumulative GPA <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="gpa" name="gpa" type="text" maxlength='4' required></div></div>
+  <div class="form_question"><div class="form_label"><label for="scale">GPA Scale</label></div>
+    <div class="form_responses"><input id="scale" name="scale" type="text" ></div></div>
+    <h2>Recommender</h2>
+  <div class="form_question"><div class="form_label"><label for="rf">Recommender First Name</label></div>
+    <div class="form_responses"><input id="rf" name="rf" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="rl">Recommender Last Name</label></div>
+    <div class="form_responses"><input id="rl" name="rl" type="text" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="re">Recommender Email</label></div>
+    <div class="form_responses"><input id="re" name="re" type="email" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="sop">Upload Statement of Purpose</label></div>
+    <div class="form_responses"><input id="sop" name="sop" type="file" ></div></div>
+  <div class="form_question"><div class="form_label"><label for="fav">What is your favourite campus building? <span class="req">*</span></label></div>
+    <div class="form_responses"><input id="fav" name="fav" type="text" required></div></div>
+    <div class="form_question"><label><input type="checkbox" name="cert"> I certify that the information is complete and accurate.</label></div>
+    <div class="dlg-actions"><button type="button" class="button">Save &amp; Continue</button><button class="primary" type="submit">Submit Application</button></div>
+    <div id="done" class="msg">Practice application “submitted” — nothing was sent anywhere.</div>
+  </form>
+</main>
+</body>
+</html>

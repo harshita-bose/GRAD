@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GradTrack</title>
+<meta name="description" content="Graduate application tracker that works with the GradFill browser extension.">
+<link rel="stylesheet" href="tracker.css">
+</head>
+<body>
+<header>
+  <b>GradTrack</b>
+  <span class="sub">Your graduate applications — data stays in your browser via GradFill</span>
+</header>
+<main>
+  <div id="banner"></div>
+  <div class="toolbar" id="toolbar" hidden>
+    <button type="button" class="primary" id="add">+ Add school</button>
+    <label>Sort <select id="sort"><option value="deadline">by deadline</option><option value="school">by school</option><option value="status">by status</option></select></label>
+    <span class="spacer"></span>
+    <button type="button" id="export">Export</button>
+    <label class="button">Import<input type="file" id="import" accept="application/json" hidden></label>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="list"></div>
+  <p class="sub-note">Try GradFill safely on the practice portal: <a href="practice/register.html">registration page</a> · <a href="practice/apply.html">application page</a>.</p>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <form method="dialog" id="edit">
+    <h2 id="dlg-title">School</h2>
+    <div class="grid">
+      <label>School <input name="school" required></label>
+      <label>Program <input name="program" placeholder="e.g. Computer Science"></label>
+      <label>Degree <input name="degree" placeholder="MS / PhD"></label>
+      <label>Term <input name="term" placeholder="Fall 2027"></label>
+      <label class="wide">Application portal URL <input name="portalUrl" type="url" placeholder="https://apply.grad.example.edu/apply/">
+        <small>GradFill links pages on this site to this school and logs what it fills.</small></label>
+      <label>Deadline <input name="deadline" type="date"></label>
+      <label>Status <select name="status"></select></label>
+      <label>Application fee <input name="fee" placeholder="e.g. USD 135"></label>
+      <label>Fee waiver <select name="waiver"></select></label>
+      <label>Fee paid on <input name="feePaid" type="date"></label>
+    </div>
+    <h3>Documents &amp; scores</h3>
+    <div class="grid" id="docs"></div>
+    <h3>Recommenders</h3>
+    <div id="recs"></div>
+    <button type="button" id="addRec" class="small">+ Recommender</button>
+    <h3>Notes</h3>
+    <textarea name="notes" rows="3"></textarea>
+    <h3>GradFill activity</h3>
+    <ul id="activity" class="activity"></ul>
+    <div class="dlg-actions">
+      <button type="button" id="del" class="danger">Delete</button>
+      <span class="spacer"></span>
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="save" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
+<script src="tracker.js"></script>
+</body>
+</html>

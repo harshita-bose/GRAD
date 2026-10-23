@@ -1,0 +1,28 @@
+:root { --ink: #1d2433; --muted: #5b6475; --line: #d9dee7; --bg: #f5f7fa; --card: #fff; --accent: #2a5bd7; --warn: #8a5a00; }
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #e6e9ef; --muted: #9aa3b2; --line: #333a48; --bg: #12151b; --card: #1b1f27; --accent: #7aa2ff; --warn: #f2c35b; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 14px 16px; background: #1d2433; color: #fff; }
+header .muted { color: #c3c9d4; }
+main { max-width: 860px; margin: 16px auto 96px; padding: 0 16px; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+nav button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 16px; padding: 4px 12px; font: inherit; cursor: pointer; }
+nav button[aria-current="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.card, fieldset { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 0 0 12px; }
+legend, h2 { font-weight: 600; font-size: 16px; padding: 0 4px; margin: 0 0 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+label.f { display: grid; gap: 2px; font-size: 13px; font-weight: 600; }
+label.f small { font-weight: 400; color: var(--muted); }
+input, select { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: var(--bg); color: var(--ink); }
+.muted { color: var(--muted); font-size: 13px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+button, .button { padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: inherit; cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; }
+footer { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+  padding: 10px 16px; background: var(--card); border-top: 1px solid var(--line); }
+#checks ul { margin: 0; padding-left: 20px; } #checks li { color: var(--warn); }
+.entry { border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 12px; }
+.entry:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.entry h3 { font-size: 14px; margin: 0 0 8px; }

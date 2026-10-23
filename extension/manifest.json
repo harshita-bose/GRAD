@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "GradFill",
+  "version": "0.1.0",
+  "description": "Fills graduate applications from your saved details, one reviewed page at a time. Never submits.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "GradFill: review and fill this page" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "content_scripts": [
+    {
+      "matches": ["https://harshita-bose.github.io/GRAD/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

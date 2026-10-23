@@ -1,0 +1,4 @@
+# backups contain personal details — never commit
+gradfill-backup-*.json
+gradtrack-*.json
+__pycache__/

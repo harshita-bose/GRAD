@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GradFill Settings</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<header>
+  <b>GradFill — your details</b>
+  <span class="muted">Stored only in this browser. Never sent anywhere.</span>
+</header>
+<main>
+  <nav id="tabs" aria-label="Sections"></nav>
+  <form id="form" autocomplete="off"></form>
+  <section class="card" id="checks" aria-live="polite"></section>
+  <section class="card">
+    <h2>Backup</h2>
+    <p class="muted">Your details and tracker live only in this browser. Export a backup file to move them to another
+      computer or to keep a copy. The file contains your personal details — store it somewhere private.</p>
+    <div class="row">
+      <button type="button" id="export">Export backup</button>
+      <label class="button">Import backup<input type="file" id="import" accept="application/json" hidden></label>
+    </div>
+  </section>
+</main>
+<footer>
+  <span id="status" class="muted" aria-live="polite"></span>
+  <button type="button" id="save" class="primary">Save details</button>
+</footer>
+<script src="schema.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
