@@ -2,9 +2,24 @@
 // Without the extension this page stores nothing.
 const STATUSES = ["Not started", "In progress", "Submitted", "Interview", "Admitted", "Waitlisted", "Rejected", "Withdrawn"];
 const WAIVERS = ["None", "Requested", "Granted", "Denied"];
-const DOC_STATES = ["To do", "Done", "Sent", "Not needed"];
-const DOCS = [["sop", "Statement of purpose"], ["cv", "CV / résumé"], ["transcripts", "Transcripts"],
-  ["personal", "Personal history"], ["gre", "GRE score report"], ["english", "TOEFL / IELTS report"]];
+const ITEM_STATES = ["To do", "Done", "Sent", "Not needed"];
+const OLD_DOCS = { sop: "Statement of purpose", cv: "CV / résumé", transcripts: "Transcripts",
+  personal: "Personal history", gre: "GRE score report", english: "TOEFL / IELTS report" };
+const isDone = it => it.state === "Done" || it.state === "Sent";
+
+// Older tracker data had a fixed "docs" map; turn it into checklist items once.
+function migrate(a) {
+  if (!a.checklist) {
+    a.checklist = Object.entries(a.docs || {}).filter(([, v]) => v !== "Not needed")
+      .map(([k, v]) => ({ id: crypto.randomUUID(), text: OLD_DOCS[k] || k, note: "", state: v, confirmed: true }));
+    delete a.docs;
+  }
+  return a;
+}
+function templateItems(key) {
+  return TEMPLATES[key].items.map(([text, note]) => ({ id: crypto.randomUUID(), text, note, state: "To do", confirmed: false }));
+}
+const guessTemplate = school => Object.keys(TEMPLATES).find(k => TEMPLATES[k].match.test(school || "")) || "generic";
 const REC_STATES = ["Not asked", "Asked", "Request sent", "Submitted"];
 
 let data = null;          // { applications: [...] }
@@ -91,7 +106,7 @@ function render() {
     : (a.deadline || "9999").localeCompare(b.deadline || "9999"));
 
   const open = apps.filter(a => !["Submitted", "Interview", "Admitted", "Waitlisted", "Rejected", "Withdrawn"].includes(a.status));
-  const next = open.filter(a => daysLeft(a.deadline) >= 0).sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
+  const next = open.filter(a => a.deadline && daysLeft(a.deadline) >= 0).sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
   $("stats").replaceChildren(
     stat(apps.length, "schools"),
     stat(apps.filter(a => a.status === "In progress").length, "in progress"),
@@ -102,8 +117,10 @@ function render() {
   list.replaceChildren();
   if (!apps.length) { list.append(h("p", { class: "empty" }, "No schools yet. Use “+ Add school”.")); return; }
   for (const a of apps) {
-    const docs = DOCS.filter(([k]) => (a.docs?.[k] || "To do") !== "Not needed");
-    const docsDone = docs.filter(([k]) => ["Done", "Sent"].includes(a.docs?.[k])).length;
+    migrate(a);
+    const items = a.checklist.filter(it => it.state !== "Not needed");
+    const itemsDone = items.filter(isDone).length;
+    const unconfirmed = items.filter(it => !it.confirmed).length;
     const recs = a.recommenders || [];
     const recsIn = recs.filter(r => r.status === "Submitted").length;
     const waiver = a.waiver && a.waiver !== "None" ? ` · waiver ${a.waiver.toLowerCase()}` : "";
@@ -113,10 +130,12 @@ function render() {
       h("div", { class: "meta" }, [a.degree, a.program, a.term].filter(Boolean).join(" · ") || "Program not set"),
       h("div", { class: "chips" },
         deadlineChip(a),
-        h("span", { class: `chip ${docsDone === docs.length ? "good" : ""}` }, `Docs ${docsDone}/${docs.length}`),
+        h("span", { class: `chip ${items.length && itemsDone === items.length ? "good" : ""}` }, `Checklist ${itemsDone}/${items.length}`),
+        unconfirmed ? h("span", { class: "chip warn" }, `${unconfirmed} unconfirmed`) : null,
         h("span", { class: `chip ${recs.length && recsIn === recs.length ? "good" : ""}` }, `Letters ${recsIn}/${recs.length}`),
         h("span", { class: `chip ${a.feePaid || a.waiver === "Granted" ? "good" : ""}` },
           a.feePaid ? `Fee paid ${a.feePaid}` : `Fee ${a.fee || "?"}${waiver}`)),
+      checklistView(a),
       last ? h("div", { class: "last" }, `Last GradFill activity ${new Date(last.t).toLocaleString()}: ${last.text}`) : null,
       h("div", { class: "acts" },
         h("button", { type: "button", class: "small", onclick: () => edit(a) }, "Edit"),
@@ -124,6 +143,21 @@ function render() {
   }
 }
 const stat = (v, l) => h("div", { class: "stat" }, h("b", {}, v), h("span", {}, l));
+
+// Requirement checklist on the card: tick items off without opening the editor.
+function checklistView(a) {
+  const items = a.checklist.filter(it => it.state !== "Not needed");
+  if (!items.length) return h("p", { class: "last" }, "No requirements listed yet — Edit → Requirements checklist.");
+  const open = items.some(it => !isDone(it));
+  return h("details", { class: "check", open: open && items.filter(isDone).length < items.length },
+    h("summary", {}, "Requirements checklist"),
+    h("ul", {}, items.map(it => h("li", {},
+      h("label", {}, h("input", { type: "checkbox", checked: isDone(it), onchange: e => {
+        it.state = e.target.checked ? "Done" : "To do"; persist(); render();
+      } }), " ", it.text, it.state === "Sent" ? " (sent)" : ""),
+      !it.confirmed ? h("span", { class: "chip warn" }, "confirm on program page") : null,
+      it.note ? h("small", {}, it.note) : null))));
+}
 
 // ---------- edit dialog ----------
 function options(sel, list, value) {
@@ -144,10 +178,12 @@ function edit(a) {
   for (const k of ["school", "program", "degree", "term", "portalUrl", "deadline", "fee", "feePaid", "notes"]) f.elements[k].value = a?.[k] || "";
   options(f.elements.status, STATUSES, a?.status || "Not started");
   options(f.elements.waiver, WAIVERS, a?.waiver || "None");
-  $("docs").replaceChildren(...DOCS.map(([k, label]) => {
-    const s = h("select", { "data-doc": k }); options(s, DOC_STATES, a?.docs?.[k] || "To do");
-    return h("label", {}, label, s);
-  }));
+  const items = a ? migrate(a).checklist : [];
+  $("items").replaceChildren(...items.map(itemRow));
+  options($("tpl"), Object.keys(TEMPLATES), "generic");
+  [...$("tpl").options].forEach(o => (o.textContent = TEMPLATES[o.value].name));
+  $("tpl").value = guessTemplate(a?.school);
+  showSources();
   $("recs").replaceChildren(...(a?.recommenders || []).map(recRow));
   $("activity").replaceChildren(...((a?.activity || []).length
     ? a.activity.map(x => h("li", {}, `${new Date(x.t).toLocaleString()} — ${x.text}`))
@@ -159,6 +195,35 @@ function edit(a) {
   $("dlg").showModal();
 }
 $("addRec").addEventListener("click", () => $("recs").append(recRow({})));
+$("addItem").addEventListener("click", () => $("items").append(itemRow({ id: crypto.randomUUID(), text: "", note: "", state: "To do", confirmed: true })));
+$("useTpl").addEventListener("click", () => {
+  const have = new Set([...$("items").querySelectorAll("[data-f=text]")].map(i => i.value.trim().toLowerCase()));
+  const add = templateItems($("tpl").value).filter(it => !have.has(it.text.toLowerCase()));
+  add.forEach(it => $("items").append(itemRow(it)));
+  $("tplMsg").textContent = add.length ? `Added ${add.length} item(s). Each is marked unconfirmed until you check it on your program's page.` : "Everything in that list is already here.";
+});
+$("tpl").addEventListener("change", showSources);
+$("edit").elements.school.addEventListener("change", e => {
+  if (editing) return;
+  $("tpl").value = guessTemplate(e.target.value);
+  showSources();
+  if (!$("items").children.length) $("useTpl").click(); // new school: start from its starter list
+});
+function showSources() {
+  const t = TEMPLATES[$("tpl").value];
+  $("tplSrc").replaceChildren(...(t.sources.length ? [h("small", {}, "Sources: "),
+    ...t.sources.flatMap((u, i) => [i ? h("small", {}, " · ") : null, h("a", { href: u, target: "_blank", rel: "noopener" }, new URL(u).hostname + new URL(u).pathname.slice(0, 30))])].filter(Boolean) : []));
+}
+function itemRow(it) {
+  const st = h("select", { "data-f": "state", "aria-label": "State" }); options(st, ITEM_STATES, it.state || "To do");
+  const row = h("div", { class: "item", "data-id": it.id },
+    h("input", { "data-f": "text", value: it.text, placeholder: "Requirement", "aria-label": "Requirement" }),
+    st,
+    h("label", { class: "conf" }, h("input", { type: "checkbox", "data-f": "confirmed", checked: !!it.confirmed }), "confirmed"),
+    h("button", { type: "button", class: "small danger", onclick: () => row.remove(), "aria-label": "Remove requirement" }, "×"),
+    h("input", { "data-f": "note", value: it.note || "", placeholder: "Note (limits, codes, where to send…)", "aria-label": "Note", class: "note" }));
+  return row;
+}
 $("add").addEventListener("click", () => edit(null));
 $("sort").addEventListener("change", render);
 $("del").addEventListener("click", () => {
@@ -173,7 +238,11 @@ $("dlg").addEventListener("close", () => {
   for (const k of ["school", "program", "degree", "term", "portalUrl", "deadline", "fee", "feePaid", "notes"]) a[k] = f.elements[k].value.trim();
   a.status = f.elements.status.value;
   a.waiver = f.elements.waiver.value;
-  a.docs = Object.fromEntries([...$("docs").querySelectorAll("select")].map(s => [s.dataset.doc, s.value]));
+  a.checklist = [...$("items").querySelectorAll(".item")].map(r => ({
+    id: r.dataset.id, text: r.querySelector("[data-f=text]").value.trim(), note: r.querySelector("[data-f=note]").value.trim(),
+    state: r.querySelector("[data-f=state]").value, confirmed: r.querySelector("[data-f=confirmed]").checked,
+  })).filter(it => it.text);
+  delete a.docs;
   a.recommenders = [...$("recs").querySelectorAll(".rec")].map(r => ({ name: r.querySelector("input").value.trim(), status: r.querySelector("select").value })).filter(r => r.name);
   if (!editing) data.applications.push(a);
   persist(); render();

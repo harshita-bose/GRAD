@@ -27,6 +27,13 @@ uses its hostname to link pages to the right school. If a school's form lives on
 (many schools use separate portals per department), open GradFill there, pick the school under
 **Application**, and press **Link this site** once.
 
+### Requirements checklist
+
+Each school has an editable checklist. When you add UC Santa Barbara, UChicago or CU Boulder,
+it starts from a list researched for that school (others get a generic list), with notes and
+source links. Requirements differ by department, so **every starter item is marked "confirm on
+program page"** until you tick *confirmed* in Edit. Tick items off straight from the school's card.
+
 ## Fill an application page
 
 1. Log in to the portal yourself and open a form page.

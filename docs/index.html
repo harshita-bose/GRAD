@@ -44,8 +44,15 @@
       <label>Fee waiver <select name="waiver"></select></label>
       <label>Fee paid on <input name="feePaid" type="date"></label>
     </div>
-    <h3>Documents &amp; scores</h3>
-    <div class="grid" id="docs"></div>
+    <h3>Requirements checklist</h3>
+    <div class="tplbar">
+      <label>Starter list <select id="tpl" aria-label="Starter checklist"></select></label>
+      <button type="button" id="useTpl" class="small">Add these items</button>
+    </div>
+    <div id="tplSrc"></div>
+    <p id="tplMsg" class="hint" aria-live="polite">Starter items are marked “unconfirmed” — requirements differ by department, so tick “confirmed” after checking your program's page.</p>
+    <div id="items"></div>
+    <button type="button" id="addItem" class="small">+ Requirement</button>
     <h3>Recommenders</h3>
     <div id="recs"></div>
     <button type="button" id="addRec" class="small">+ Recommender</button>
@@ -61,6 +68,7 @@
     </div>
   </form>
 </dialog>
+<script src="requirements.js"></script>
 <script src="tracker.js"></script>
 </body>
 </html>

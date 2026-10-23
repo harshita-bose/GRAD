@@ -92,6 +92,7 @@ def main():
 
         # --- tracker site: add a school through the UI, check it reaches extension storage
         page = ctx.new_page()
+        page.on("pageerror", lambda e: print("PAGE ERROR:", e))
         page.goto(base + "/index.html")
         expect(page.locator("#toolbar")).to_be_visible()
         page.click("#add")
@@ -105,6 +106,32 @@ def main():
         stored = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker")
         assert stored["applications"][0]["school"] == "Practice University", stored
         assert stored["applications"][0]["recommenders"] == [{"name": "Asha Rao", "status": "Not asked"}]
+        assert len(stored["applications"][0]["checklist"]) == 8  # generic starter list for an unknown school
+
+        # requirements checklist: a known school gets its own starter list, all unconfirmed
+        page.click("#add")
+        page.fill("[name=school]", "UC Santa Barbara")
+        page.locator("[name=school]").dispatch_event("change")
+        expect(page.locator("#items .item")).to_have_count(10)
+        expect(page.locator("#tplSrc a").first).to_be_visible()
+        page.locator("#items .item").first.locator("[data-f=confirmed]").check()  # user confirmed item 1
+        page.click("dialog button[value=save]")
+        ucsb = page.locator(".app").filter(has_text="UC Santa Barbara")
+        expect(ucsb.locator(".chip.warn", has_text="unconfirmed")).to_have_text("9 unconfirmed")
+        ucsb.locator("details.check li", has_text="CV / résumé").locator("input").check()  # tick off on the card
+        expect(ucsb.locator(".chip", has_text="Checklist")).to_have_text("Checklist 1/10")
+        apps = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications")
+        cv = next(i for i in apps[1]["checklist"] if i["text"] == "CV / résumé")
+        assert cv["state"] == "Done" and not cv["confirmed"] and apps[1]["checklist"][0]["confirmed"], apps[1]
+        # older data with the fixed "docs" map is converted into checklist items
+        sw.evaluate("""async () => { const { tracker } = await chrome.storage.local.get('tracker');
+            tracker.applications.push({ id: 'old', school: 'Old Entry', docs: { sop: 'Done', gre: 'Not needed', cv: 'To do' } });
+            await chrome.storage.local.set({ tracker }); }""")
+        expect(page.locator(".app").filter(has_text="Old Entry").locator(".chip", has_text="Checklist")).to_have_text("Checklist 1/2")
+        sw.evaluate("""async () => { const { tracker } = await chrome.storage.local.get('tracker');
+            tracker.applications = tracker.applications.filter(a => a.id === tracker.applications[0].id);
+            await chrome.storage.local.set({ tracker }); }""")
+        expect(page.locator(".app")).to_have_count(1)
 
         # --- registration page (like UCI's)
         page.goto(base + "/practice/register.html")
