@@ -177,6 +177,19 @@ def main():
         if os.environ.get("GF_SHOTS"):
             page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "tracker.png"))
 
+        # "Link this site": a school whose portal URL is elsewhere can be linked from the panel
+        sw.evaluate("""async () => { const { tracker } = await chrome.storage.local.get('tracker');
+            tracker.applications.push({ id: 'other', school: 'Other U', portalUrl: 'https://apply.other.edu/' });
+            await chrome.storage.local.set({ tracker }); }""")
+        page.goto(base + "/practice/apply.html")
+        open_gradfill(sw)
+        panel(page).locator("label", has_text="Application").locator("select").select_option("other")
+        panel(page).locator("button", has_text="Link this site").click()
+        expect(panel(page).locator(".msg.good")).to_contain_text("now linked to Other U")
+        other = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[1]")
+        assert other["portalHosts"] == ["127.0.0.1"], other
+        page.goto(base + "/index.html")
+
         # profile is never readable by the tracker page
         leaked = page.evaluate("""() => new Promise(r => {
             addEventListener('message', e => { if (e.data && e.data.id === 99) r(JSON.stringify(e.data)); });

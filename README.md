@@ -23,7 +23,9 @@ Two pieces that work together, with all your data kept **only in your own browse
 
 Open https://harshita-bose.github.io/GRAD/ and use **+ Add school**. Put the school's
 **application portal URL** in each entry (e.g. `https://apply.grad.uci.edu/apply/`). GradFill
-uses its hostname to link pages to the right school.
+uses its hostname to link pages to the right school. If a school's form lives on a different site
+(many schools use separate portals per department), open GradFill there, pick the school under
+**Application**, and press **Link this site** once.
 
 ## Fill an application page
 

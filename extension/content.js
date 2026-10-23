@@ -324,8 +324,21 @@
   function matchApp() {
     const apps = (S.tracker && S.tracker.applications) || [];
     const host = location.hostname;
-    const hit = apps.find(a => { try { return new URL(a.portalUrl).hostname === host; } catch { return false; } });
+    const hit = apps.find(a => linked(a, host));
     return hit ? hit.id : "";
+  }
+  function linked(a, host) {
+    if ((a.portalHosts || []).includes(host)) return true;
+    try { return new URL(a.portalUrl).hostname === host; } catch { return false; }
+  }
+  async function linkSite() {
+    const { tracker } = await chrome.storage.local.get("tracker");
+    const app = tracker && tracker.applications.find(a => a.id === S.appId);
+    if (!app) return;
+    app.portalHosts = [...new Set([...(app.portalHosts || []), location.hostname])];
+    await chrome.storage.local.set({ tracker });
+    S.tracker = tracker;
+    render(h("div", { class: "msg good" }, `${location.hostname} is now linked to ${app.school}. GradFill will pick it automatically here.`));
   }
 
   // ---------- submit guard ----------
@@ -401,10 +414,14 @@
     // linked application + list-entry pickers
     const apps = (S.tracker && S.tracker.applications) || [];
     const bar = h("div", { class: "bar" });
-    const appSel = h("select", { onchange: e => { S.appId = e.target.value; } },
+    const appSel = h("select", { onchange: e => { S.appId = e.target.value; render(); } },
       h("option", { value: "" }, apps.length ? "— not linked —" : "— add schools on the tracker site —"),
       apps.map(a => h("option", { value: a.id, selected: a.id === S.appId }, `${a.school}${a.program ? " · " + a.program : ""}`)));
     bar.append(h("label", {}, "Application", appSel));
+    const chosen = apps.find(a => a.id === S.appId);
+    if (chosen && !linked(chosen, location.hostname))
+      bar.append(h("div", { class: "msg warn" }, `This site (${location.hostname}) isn't linked to ${chosen.school} yet. `,
+        h("button", { class: "act sec", onclick: linkSite }, "Link this site")));
     const lists = [...new Set(S.rows.map(r => r.list).filter(Boolean))];
     const needsActive = S.rows.some(r => r.key && r.key.startsWith("*"));
     for (const sec of GF.LIST_SECTIONS) {

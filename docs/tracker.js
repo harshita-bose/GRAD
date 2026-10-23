@@ -152,6 +152,9 @@ function edit(a) {
   $("activity").replaceChildren(...((a?.activity || []).length
     ? a.activity.map(x => h("li", {}, `${new Date(x.t).toLocaleString()} — ${x.text}`))
     : [h("li", {}, "Nothing yet. Open GradFill on this school's portal to start.")]));
+  const hosts = a?.portalHosts || [];
+  $("hosts").replaceChildren(...(hosts.length ? [h("small", {}, `Also linked from GradFill: ${hosts.join(", ")} `),
+    h("button", { type: "button", class: "small", onclick: () => { delete a.portalHosts; $("hosts").replaceChildren(h("small", {}, "Unlinked — press Save to keep this.")); } }, "Unlink")] : []));
   $("del").hidden = !a;
   $("dlg").showModal();
 }
