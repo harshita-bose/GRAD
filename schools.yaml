@@ -19,6 +19,15 @@ uiuc:
     degree: ""
     program_name: ""
 
+stonybrook:
+  name: "Stony Brook University"
+  # UNVERIFIED: the grad school home page you gave; click through to "Apply" yourself.
+  start_url: "https://www.stonybrook.edu/grad/"
+  program:
+    term: ""
+    degree: ""
+    program_name: ""
+
 # Safe rehearsal target: a fake 3-page portal hosted from docs/ on GitHub Pages.
 practice:
   name: "Practice Portal (not a real application)"

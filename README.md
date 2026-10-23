@@ -34,7 +34,7 @@ Set `term`, `degree` and `program_name` for each school in `schools.yaml`.
 ## Run
 
 ```bash
-python -m grad_autofill ucr     # or: uiuc
+python -m grad_autofill ucr     # or: uiuc, stonybrook
 ```
 
 Log in to the portal in the browser window that opens, go to a form page, then type `f` in the terminal.
