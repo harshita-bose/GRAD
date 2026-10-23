@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal — Personal</title>
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header><b>Practice Graduate Application</b></header>
+<div class="banner">Practice only — not a real application. Nothing you type leaves this browser tab.</div>
+<main>
+  <div class="steps"><span class="on">1. Personal</span> › <span>2. Academics</span> › <span>3. Review &amp; Submit</span></div>
+  <form data-next="2-academics.html" onsubmit="return false">
+    <h1>Personal information</h1>
+    <div class="form_question"><div class="form_label">First / Given Name <span class="req">*</span></div><input name="first" required></div>
+    <div class="form_question"><div class="form_label">Middle Name</div><input name="middle"></div>
+    <div class="form_question"><div class="form_label">Last / Family Name <span class="req">*</span></div><input name="last" required></div>
+    <div class="form_question"><div class="form_label">Preferred Name</div><input name="preferred"></div>
+    <div class="form_question"><div class="form_label">Date of Birth <span class="req">*</span></div><input name="dob" required>
+      <div class="hint">Deliberately no format given — the tool should flag this.</div></div>
+    <div class="form_question"><div class="form_label">Email Address <span class="req">*</span></div><input name="email" type="email" required></div>
+    <div class="form_question"><div class="form_label">Mobile Phone <span class="req">*</span></div><input name="phone" required maxlength="15"></div>
+    <div class="form_question"><div class="form_label">Street Address Line 1 <span class="req">*</span></div><input name="addr1" required></div>
+    <div class="form_question"><div class="form_label">Street Address Line 2</div><input name="addr2"></div>
+    <div class="form_question"><div class="form_label">City <span class="req">*</span></div><input name="city" required></div>
+    <div class="form_question"><div class="form_label">State / Province</div><input name="state"></div>
+    <div class="form_question"><div class="form_label">Postal Code <span class="req">*</span></div><input name="postal" required></div>
+    <div class="form_question"><div class="form_label">Country <span class="req">*</span></div>
+      <select name="country" required><option value=""></option><option>India (IN)</option><option>United States</option><option>Nepal</option></select></div>
+    <div class="form_question"><div class="form_label">Country of Citizenship <span class="req">*</span></div>
+      <select name="citizenship" required><option value=""></option><option>India</option><option>United States</option><option>Nepal</option></select></div>
+    <fieldset><legend>Are you a U.S. citizen? <span class="req">*</span></legend>
+      <label><input type="radio" name="uscitizen" value="Yes" required> Yes</label>
+      <label><input type="radio" name="uscitizen" value="No"> No</label></fieldset>
+    <fieldset><legend>Are you Hispanic or Latino?</legend>
+      <label><input type="radio" name="hispanic" value="Yes"> Yes</label>
+      <label><input type="radio" name="hispanic" value="No"> No</label>
+      <label><input type="radio" name="hispanic" value="Decline"> Prefer not to say</label></fieldset>
+    <div class="actions"><span></span><button type="button" data-continue>Save &amp; Continue</button></div>
+  </form>
+</main>
+<script src="portal.js"></script>
+</body>
+</html>

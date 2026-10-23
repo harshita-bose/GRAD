@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal — Review</title>
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header><b>Practice Graduate Application</b></header>
+<div class="banner">Practice only — not a real application. Nothing you type leaves this browser tab.</div>
+<main>
+  <div class="steps"><span>1. Personal</span> › <span>2. Academics</span> › <span class="on">3. Review &amp; Submit</span></div>
+  <div class="card">
+    <h1>Review your application</h1>
+    <table id="summary"></table>
+    <fieldset style="margin-top:16px"><legend>Certification</legend>
+      <label><input type="checkbox" name="certify"> I certify that the information above is complete and accurate.</label></fieldset>
+    <div class="actions">
+      <button type="button" class="secondary" onclick="location.href='2-academics.html'">Back</button>
+      <button type="button" id="submit">Submit Application</button>
+    </div>
+    <div id="done">Practice submission recorded — nothing was sent anywhere. If you got here while running grad-autofill, you unlocked it with <code>allow-submit</code>.</div>
+  </div>
+</main>
+<script src="portal.js"></script>
+</body>
+</html>

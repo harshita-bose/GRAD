@@ -99,8 +99,9 @@ RULES = [
     ("contact.alternate_email", r"(alternate|secondary|other) e-?mail", "high"),
     ("contact.email", r"e-?mail", "high"),
     ("contact.phone", r"phone|mobile|cell|telephone", "high"),
-    ("contact.address.line1", r"(address|street).*(1|line 1|one)|^street|^address$", "high"),
-    ("contact.address.line2", r"(address|street).*(2|line 2|two)|apt|suite", "high"),
+    # line 2 first: "Street Address Line 2" would otherwise also match the line-1 pattern
+    ("contact.address.line2", r"(address|street).*(\b2\b|line 2|two)|\bapt\b|suite", "high"),
+    ("contact.address.line1", r"(address|street).*(\b1\b|line 1|one)|^street|^address$", "high"),
     ("contact.address.postal_code", r"postal|zip|pin ?code", "high"),
     ("contact.address.city", r"\bcity\b|town", "low"),
     ("contact.address.state", r"\bstate\b|province|region", "low"),

@@ -89,6 +89,10 @@ def best_option(options, value):
     for o in options:
         if norm(o["text"]) in aliases.get(target, []):
             return o, True
+    # "India" vs "India (IN)": one option that starts with the value as a whole word
+    starts = [o for o in options if re.match(re.escape(value) + r"\b", o["text"], re.I)]
+    if len(starts) == 1:
+        return starts[0], False
     close = difflib.get_close_matches(value, texts, n=1, cutoff=0.75)
     if close:
         return options[texts.index(close[0])], False

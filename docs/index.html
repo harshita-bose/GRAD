@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grad-autofill</title>
+<link rel="stylesheet" href="practice/portal.css">
+</head>
+<body>
+<header><b>grad-autofill</b></header>
+<main>
+  <div class="card">
+    <h1>Supervised graduate-application filler</h1>
+    <p>The tool runs on your own computer (Python + a browser it opens for you). It is not a website,
+       so it can't run here. This site hosts a <b>practice portal</b> you can point it at to try every
+       step before using it on a real application.</p>
+    <p><a href="practice/1-personal.html">Open the practice application →</a></p>
+    <h1>Try it</h1>
+<pre style="white-space:pre-wrap;background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto">pip install -r requirements.txt
+playwright install chromium
+cp profile.example.yaml profile.yaml   # fill in, or use test values
+python -m grad_autofill practice</pre>
+    <p>Then in the terminal: <code>f</code> to fill a page, <code>+N</code> to approve flagged rows,
+       Enter to fill, <code>next</code> to continue. On the last page, the Submit button stays
+       blocked until you type <code>allow-submit</code>.</p>
+    <p class="hint">The practice pages deliberately include tricky fields: an unstated date format, an
+       inexact dropdown option (“India (IN)”), a demographic question, a certification checkbox and a
+       required question no profile can answer.</p>
+  </div>
+</main>
+</body>
+</html>

@@ -50,8 +50,21 @@ Type `help` at either prompt to see the commands. A typical page:
 On the final review page, run `v` to compare everything visible with your profile, read the
 application yourself, then decide on submission.
 
+## Practice first
+
+`docs/` is a fake three-page application portal, published with GitHub Pages at
+https://harshita-bose.github.io/GRAD/ (enable it in **Settings → Pages → Deploy from a branch →
+your branch, `/docs` folder**). It includes the tricky cases: an unstated date format, an inexact
+dropdown option, a demographic question, a certification checkbox and an unanswerable required
+question. Nothing typed there leaves your browser tab.
+
+```bash
+python -m grad_autofill practice
+```
+
 ## Test
 
 ```bash
-python tests/test_smoke.py   # headless run against tests/mock_form.html
+python tests/test_smoke.py      # headless run against tests/mock_form.html
+python tests/test_practice.py   # walks the 3-page practice portal end to end
 ```

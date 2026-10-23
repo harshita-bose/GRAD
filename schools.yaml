@@ -18,3 +18,12 @@ uiuc:
     term: ""
     degree: ""
     program_name: ""
+
+# Safe rehearsal target: a fake 3-page portal hosted from docs/ on GitHub Pages.
+practice:
+  name: "Practice Portal (not a real application)"
+  start_url: "https://harshita-bose.github.io/GRAD/practice/1-personal.html"
+  program:
+    term: "Fall 2027"
+    degree: "MS"
+    program_name: "Computer Science"
