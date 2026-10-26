@@ -98,8 +98,19 @@ function check() {
 async function save() {
   await chrome.storage.local.set({ profile });
   dirty = false;
-  statusEl.textContent = `Saved ${new Date().toLocaleTimeString()}`;
+  statusEl.textContent = `Saved ${new Date().toLocaleTimeString()} — export a backup now and then (bottom of this page)`;
 }
+
+// Removing the extension deletes everything it stores, so keep nudging towards a backup file.
+async function showBackupAge() {
+  const { lastBackup } = await chrome.storage.local.get("lastBackup");
+  const el = document.getElementById("lastBackup");
+  const days = lastBackup ? Math.floor((Date.now() - Date.parse(lastBackup)) / 86400000) : null;
+  el.className = "warn-line" + (days != null && days < 7 ? " ok" : "");
+  el.textContent = days == null ? "⚠ You have no backup yet. If GradFill is removed from Chrome, your details and tracker are deleted with it."
+    : `Last backup: ${new Date(lastBackup).toLocaleDateString()}${days >= 7 ? " — over a week ago, export a fresh one" : ""}.`;
+}
+showBackupAge();
 
 document.getElementById("save").addEventListener("click", save);
 document.getElementById("export").addEventListener("click", async () => {
@@ -108,6 +119,8 @@ document.getElementById("export").addEventListener("click", async () => {
   const a = h("a", { href: URL.createObjectURL(blob), download: `gradfill-backup-${new Date().toISOString().slice(0, 10)}.json` });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  await chrome.storage.local.set({ lastBackup: new Date().toISOString() });
+  showBackupAge();
 });
 document.getElementById("import").addEventListener("change", async e => {
   const file = e.target.files[0];

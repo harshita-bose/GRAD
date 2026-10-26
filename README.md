@@ -19,6 +19,19 @@ Two pieces that work together, with all your data kept **only in your own browse
    country code, GPA above its scale, passport expiring soon, and so on).
 5. Pin the GradFill icon to the toolbar.
 
+## Updating GradFill without losing your details
+
+Your details and tracker are stored inside the extension. **Clicking "Remove" on
+`chrome://extensions` deletes them.** To update:
+
+1. GradFill settings → **Export backup** (just in case).
+2. Download the new ZIP and copy the new `extension` folder's files **over your existing
+   extension folder**.
+3. On `chrome://extensions`, click the reload ↻ button on GradFill.
+
+From version 0.2.0 GradFill always has the same ID (`nkoenhabpebhdkmbhjmfekdilflihipj`), so loading it
+from a different folder keeps your data too, as long as you never press Remove.
+
 ## Track your schools
 
 Open https://harshita-bose.github.io/GRAD/ and use **+ Add school**. Put the school's

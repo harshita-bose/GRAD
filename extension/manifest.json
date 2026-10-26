@@ -1,17 +1,33 @@
 {
   "manifest_version": 3,
   "name": "GradFill",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fills graduate applications from your saved details, one reviewed page at a time. Never submits.",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "GradFill: review and fill this page" },
-  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "GradFill: review and fill this page"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
-      "matches": ["https://harshita-bose.github.io/GRAD/*"],
-      "js": ["bridge.js"],
+      "matches": [
+        "https://harshita-bose.github.io/GRAD/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
       "run_at": "document_start"
     }
-  ]
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvsCUoelVe5Riw4ozeLFBbmEAfiWi6UwDWFUEdYZjL1iN7wiEtFu70h4QELNbGkQFLzn9KhFEvCGRMCKjZrFRzSC5b3VyjlZ92sfyz0LIlErCsUZ5PSs4DGXQg5S9fX/gKpK2Cmp0ChIB6FmPWqNWeqD1SmzkTBeqkCnDUucH/1un5bHTRmnHMItEZSiNIzUzB2VqesbVK06UIwwXqOheyFi2rJSmm/yko+U68ebdnPx7nGc9XUgwJwPyH3a7i3108U9/yNSHvnahw8WEWWEAJNfJilHr63yvAgIxlacONWcN6H0IT9t86qaAgE5Uxc1XNz8svxDq4I/WeArI1IEJmQIDAQAB"
 }

@@ -76,6 +76,8 @@ def main():
             tempfile.mkdtemp(), headless=True, executable_path=os.environ.get("GF_CHROMIUM") or None,
             args=[f"--disable-extensions-except={ext}", f"--load-extension={ext}"])
         sw = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
+        # the manifest key pins the ID, so data survives loading GradFill from a different folder
+        assert sw.url.startswith("chrome-extension://nkoenhabpebhdkmbhjmfekdilflihipj/"), sw.url
         # the settings page opens itself on first install; wait for it, then work in a fresh tab
         settings = next((pg for pg in ctx.pages if "options.html" in pg.url), None)
         if not settings:  # it may take over the initial blank tab instead of opening a new one
