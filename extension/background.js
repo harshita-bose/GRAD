@@ -1,7 +1,7 @@
 // Clicking the toolbar icon injects the review panel into the current tab only (activeTab):
 // GradFill never reads a page you have not opened it on.
 async function openPanel(tabId) {
-  await chrome.scripting.executeScript({ target: { tabId }, files: ["schema.js", "content.js"] });
+  await chrome.scripting.executeScript({ target: { tabId }, files: ["schema.js", "matcher.js", "content.js"] });
 }
 
 chrome.action.onClicked.addListener(tab => {

@@ -166,19 +166,20 @@ GF.RULES = [
   ["education.*.country", rx(`^${EDU}.*country`), "high"],
   ["education.*.institution", /institution|university|college|school name|name of (the )?school|^education .*\bname\b/i, "high"],
   ["education.*.major", /major|field of study|discipline|concentration|specialization|branch/i, "high"],
+  ["education.*.degree", /^education .*(degree|qualification)( (earned|received|type|awarded|name|title))?$/i, "high"],
   ["education.*.degree", /degree (earned|received|type|awarded|name|title)|^(education )?degree$|qualification/i, "low"],
   ["education.*.gpa_scale", /gpa.*scale|grading scale|\bscale\b|out of|maximum (gpa|grade)/i, "high"],
   ["education.*.gpa", /\bgpa\b|grade point|\bcgpa\b|cumulative average|percentage|marks obtained/i, "high"],
 
-  ["citizenship.passport_expiry", /passport.*(expir|valid)/i, "high"],
-  ["citizenship.passport_number", /passport/i, "high"],
+  ["citizenship.passport_expiry", /passport.*(expir|valid until|validity)/i, "high"],
+  ["citizenship.passport_number", /passport (number|no\.?|#)|^passport$/i, "high"],
   ["personal.middle_name", /middle/i, "high"],
   ["personal.preferred_name", /preferred|nick ?name|chosen name|known as/i, "high"],
   ["personal.former_names", /former|previous name|other names|maiden|alias/i, "high"],
-  ["personal.first_name", /first name|given name|forename|^(\w+ )?first$/i, "high"],
-  ["personal.last_name", /last name|family name|surname|^(\w+ )?last$/i, "high"],
+  ["personal.first_name", /first name|given name|forename|christian name|first\/given|^(\w+ )?first$/i, "high"],
+  ["personal.last_name", /last name|family name|surname|sur name|last\/family|family\/last|^(\w+ )?last$/i, "high"],
   ["personal.full_name", /full (legal )?name|legal name|^(\w+ )?name$|^your name|name of (the )?(participant|applicant|student|candidate)|(participant|applicant|student|candidate)'?s? name/i, "low"],
-  ["personal.date_of_birth", /birth ?date|date of birth|\bdob\b|^birthday/i, "high"],
+  ["personal.date_of_birth", /birth ?date|date of birth|\bd\.?o\.?b\b|^birthday|born on|birth day/i, "high"],
   ["citizenship.city_of_birth", /city of birth|birth ?city|place of birth/i, "high"],
   ["citizenship.country_of_birth", /country of birth|birth ?country/i, "high"],
   ["personal.pronouns", /pronoun/i, "high"],
@@ -193,14 +194,14 @@ GF.RULES = [
 
   ["contact.alternate_email", /(alternate|secondary|other) e-?mail/i, "high"],
   ["contact.email", /e-?mail/i, "high"],
-  ["contact.phone", /phone|mobile|\bcell\b|telephone|contact (number|no)/i, "high"],
+  ["contact.phone", /phone|mobile|\bcell\b|telephone|contact (number|no)|whats ?app|country ?code|dial(ing)? code|calling code|\bisd\b/i, "high"],
   // line 2 before line 1: "Street Address Line 2" also matches the line-1 pattern
   ["address.line2", /(address|street).*(\b2\b|line 2|two)|\bapt\b|suite/i, "high"],
   ["address.line1", /(address|street).*(\b1\b|line 1|one)|^street|^(\w+ )?address$|(permanent|mailing|home|current|residential) address/i, "high"],
   ["address.postal_code", /postal|\bzip\b|pin ?code/i, "high"],
-  ["address.city", /^address .*(\bcity\b|\btown\b)/i, "high"],
+  ["address.city", /^address .*(\bcity\b|\btown\b)|(current|home|residential) city/i, "high"],
   ["address.state", /^address .*(\bstate\b|province|region)/i, "high"],
-  ["address.country", /^address .*country/i, "high"],
+  ["address.country", /^address .*country|country of (residence|domicile)|residence country|current country/i, "high"],
   ["address.city", /\bcity\b|\btown\b/i, "low"],
   ["address.state", /\bstate\b|province|region/i, "low"],
   ["address.country", /country/i, "low"],
@@ -210,25 +211,17 @@ GF.RULES = [
   ["*.end_date", /\b(end|until)\b|\bto\b|graduat|completion|conferr/i, "low"],
 ];
 
+// Questions about someone else: never answered with your details.
+GF.OTHER_PERSON = /emergency|parent|guardian|father|mother|next of kin|spouse|partner'?s|sibling|brother|sister|sponsor|dependent/i;
+
 // Section headings above fields: which part of your details they are about.
 GF.HEADINGS = [
+  ["other", /emergency|parent|guardian|father|mother|family (information|details|background)|next of kin|spouse|sponsor|financial support/i, "other person"],
   ["recommenders", /recommend|referee|reference|evaluator|letter writer/i, "recommender"],
   ["education", /education|academic (history|record|background)|institution|colleges?( attended)?$|universit(y|ies)( attended)?$|schools? attended|prior degree/i, "education"],
   ["employment", /employment|work experience|professional experience|\bjob\b|employer/i, "employment"],
   ["citizenship", /citizenship|nationality|immigration|visa/i, "citizenship"],
   ["address", /address|contact information|mailing|residence/i, "address"],
-];
-
-// Country names forms often spell differently. A match through these counts as exact.
-GF.COUNTRY_ALIASES = [
-  ["United States", "USA", "US", "U.S.", "U.S.A.", "United States of America", "America"],
-  ["United Kingdom", "UK", "U.K.", "Great Britain", "Britain", "England"],
-  ["South Korea", "Korea, Republic of", "Republic of Korea", "Korea (South)", "Korea"],
-  ["Russia", "Russian Federation"], ["Germany", "Deutschland", "Federal Republic of Germany"],
-  ["China", "People's Republic of China", "PRC", "China (PRC)"], ["Vietnam", "Viet Nam"],
-  ["Iran", "Iran, Islamic Republic of"], ["Czech Republic", "Czechia"], ["Netherlands", "The Netherlands", "Holland"],
-  ["India", "Republic of India", "Bharat"], ["Taiwan", "Taiwan, Province of China", "Republic of China"],
-  ["Hong Kong", "Hong Kong SAR", "Hong Kong, China"], ["United Arab Emirates", "UAE"],
 ];
 
 // Details that are built from others, offered when a form asks for a whole name at once.

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GradFill",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Fills graduate applications from your saved details, one reviewed page at a time. Never submits.",
   "permissions": [
     "activeTab",

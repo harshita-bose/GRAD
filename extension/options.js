@@ -133,6 +133,7 @@ document.getElementById("import").addEventListener("change", async e => {
     if (data.tracker && Array.isArray(data.tracker.applications)) next.tracker = data.tracker;
     await chrome.storage.local.set(next);
     profile = next.profile; build(); check();
+    document.getElementById("restore").hidden = true;
     statusEl.textContent = "Backup restored";
   } catch (err) {
     alert(`Could not import: ${err.message}`);
@@ -160,8 +161,12 @@ auto.addEventListener("change", async () => {
 });
 chrome.storage.local.get("settings").then(got => { auto.checked = (got.settings || {}).autoFill !== false; });
 
+const isEmpty = p => !Object.values(p.personal).some(Boolean) && !Object.values(p.contact).some(Boolean);
+document.getElementById("restoreBtn").addEventListener("click", () => document.getElementById("import").click());
+
 chrome.storage.local.get("profile").then(got => {
   profile = normalise(got.profile);
+  document.getElementById("restore").hidden = !isEmpty(profile);
   build();
   check();
 });

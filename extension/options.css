@@ -31,3 +31,5 @@ label.opt input { width: auto; margin-top: 4px; }
 label.opt small { display: block; font-weight: 400; color: var(--muted); }
 .warn-line { font-weight: 600; color: var(--warn); margin: 0 0 6px; }
 .warn-line.ok { color: var(--muted); font-weight: 400; }
+.restore { border: 2px solid var(--accent); }
+.restore h2 { margin-top: 0; }

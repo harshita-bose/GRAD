@@ -23,7 +23,7 @@ PROFILE = {
     "contact": {"email": "test@example.com", "phone": "+91 9800000000"},
     "address": {"line1": "1 Main Rd", "line2": "", "city": "Delhi", "postal_code": "110042", "country": "India"},
     "citizenship": {"country_of_citizenship": "India", "us_citizen": "No"},
-    "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics",
+    "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics", "degree": "B.Tech",
                    "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"}, {}, {}],
     "employment": [{}, {}, {}],
     "recommenders": [{"first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in"},
@@ -64,7 +64,7 @@ def card(page, text):
 def open_gradfill(sw):
     sw.evaluate("""async () => {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["schema.js", "content.js"] });
+        await openPanel(tab.id);  // the extension's own click handler, same files as a real click
     }""")
 
 
@@ -84,6 +84,22 @@ def main():
             settings = ctx.pages[0]
             settings.wait_for_url("**/options.html")
         expect(settings.locator("#sec-personal")).to_be_visible()
+        # restoring a backup made by an older GradFill (no recommender address, old tracker format)
+        expect(settings.locator("#restore")).to_be_visible()
+        old = {"gradfill": 1, "profile": {"personal": {"first_name": "Restored", "last_name": "Person"},
+                                          "recommenders": [{"first_name": "Old", "email": "old@x.edu"}]},
+               "tracker": {"applications": [{"id": "u1", "school": "UCI", "docs": {"sop": "Done"}}]}}
+        old_file = pathlib.Path(tempfile.mkdtemp()) / "gradfill-backup-old.json"
+        old_file.write_text(json.dumps(old))
+        settings.once("dialog", lambda d: d.accept())
+        settings.set_input_files("#import", str(old_file))
+        expect(settings.locator("#status")).to_contain_text("Backup restored")
+        expect(settings.locator("#restore")).to_be_hidden()
+        back = sw.evaluate("async () => chrome.storage.local.get(['profile', 'tracker'])")
+        assert back["profile"]["personal"]["first_name"] == "Restored"
+        assert back["profile"]["recommenders"][0]["first_name"] == "Old" and back["profile"]["recommenders"][0]["country"] == ""
+        assert len(back["profile"]["recommenders"]) == 4 and back["tracker"]["applications"][0]["school"] == "UCI"
+        expect(settings.locator("#sec-personal [data-k=first_name]")).to_have_value("Restored")
         settings.fill('#sec-personal [data-k=first_name]', "Typed")
         settings.fill('#sec-contact [data-k=phone]', "98000")  # no country code → a doubt
         expect(settings.locator("#checks")).to_contain_text("no +country code")
@@ -171,15 +187,27 @@ def main():
             assert "manual" in card(page, label).get_attribute("class"), label
         assert page.input_value("#pw") == "" and page.input_value("#pw2") == "" and not page.is_checked("[name=tos]")
 
+        # --- different wording, other formats, every kind of dropdown
+        page.goto(base + "/practice/tricky.html")
+        open_gradfill(sw)
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        got = {k: page.input_value(f"#{k}") for k in ["g1", "g2", "mail", "dob", "nat", "cc", "mob", "res", "town", "deg"]}
+        assert got == {"g1": "Test", "g2": "Applicant", "mail": "test@example.com", "dob": "17-05-2003", "nat": "Indian",
+                       "cc": "91", "mob": "9800000000", "res": "India", "town": "Delhi", "deg": "Bachelor's degree"}, got
+        assert page.get_attribute("#res", "data-chosen") == "India"  # picked from the list, not just typed
+        assert panel(page).locator(".res.bad").count() == 0, panel(page).locator(".res.bad").all_inner_texts()
+
         # --- application page
         page.goto(base + "/practice/apply.html")
         open_gradfill(sw)
         expect(panel(page).locator(".msg.good")).to_contain_text("NOT filled")
-        assert page.input_value("#ctry") == "" and page.input_value("#city") == ""  # uncertain: waits for you
-        assert "dashed" in page.evaluate("document.getElementById('ctry').style.outline")
+        # "Country" → "India (IN)": the one clearly matching option is picked, outlined amber to double-check
+        assert page.input_value("#ctry") == "India (IN)" and "verify" in card(page, "Country *").get_attribute("class")
+        assert page.input_value("#city") == "Delhi"  # label and the field's name agree
+        assert page.input_value("#pname") == ""  # "Name of Participant": unsure, waits for you
+        assert "dashed" in page.evaluate("document.getElementById('pname').style.outline")
         assert page.input_value("#a1") == "1 Main Rd" and page.is_checked("[name=usc][value=N]")  # sure: filled
         assert "none" in card(page, "Street Address Line 2").get_attribute("class")  # empty → not guessed
-        assert "Closest option" in card(page, "Country").inner_text()
         assert "manual" in card(page, "Hispanic").get_attribute("class")
         assert "upload" in card(page, "Statement of Purpose").get_attribute("class")
         assert "manual" in card(page, "I certify").get_attribute("class")
@@ -237,7 +265,7 @@ def main():
 
         # activity logged to the tracker (the app is linked by the portal's hostname)
         acts = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[0]")
-        assert acts["status"] == "In progress" and len(acts["activity"]) == 5, acts
+        assert acts["status"] == "In progress" and len(acts["activity"]) == 6, acts
         page.goto(base + "/index.html")
         expect(page.locator(".app .last")).to_contain_text("Filled")
         if os.environ.get("GF_SHOTS"):

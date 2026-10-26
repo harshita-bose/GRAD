@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Tricky Form</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+  .form-group { margin-bottom: 14px; } .form-group > label, .form-group > .label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; } .row select { width: auto; } .row input { flex: 1 1 160px; }
+  .combo { position: relative; max-width: 360px; }
+  .combo ul { position: absolute; z-index: 5; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0; list-style: none;
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+  .combo li { padding: 6px 10px; cursor: pointer; } .combo li:hover { background: var(--chip); }
+  small { color: var(--muted); }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main>
+  <div class="msg">Questions worded differently, values in other formats, and dropdowns of every kind.</div>
+  <form onsubmit="event.preventDefault()">
+    <h2>About you</h2>
+    <div class="form-group"><label for="g1">Given name(s)</label><input id="g1"></div>
+    <div class="form-group"><label for="g2">Surname / Family name (as in passport)</label><input id="g2"></div>
+    <div class="form-group"><input name="applicant_mname" aria-label="" placeholder=""><small>(no visible label — only the field's name says what it is)</small></div>
+    <div class="form-group"><label for="mail">E-mail ID</label><input id="mail" autocomplete="email"></div>
+    <div class="form-group"><label for="dob">Date of Birth</label><input id="dob" aria-describedby="dobhint"><small id="dobhint">Format: DD-MM-YYYY</small></div>
+    <div class="form-group"><label for="nat">Nationality</label>
+      <select id="nat"><option>-- Select --</option><option>American</option><option>Indian</option><option>Nepalese</option></select></div>
+    <div class="form-group"><span class="label">Mobile number</span>
+      <div class="row">
+        <select id="cc" aria-label="Country code"><option value="">Code</option><option value="1">+1 (USA)</option><option value="91">+91 (India)</option><option value="977">+977 (Nepal)</option></select>
+        <input id="mob" aria-label="Mobile number" maxlength="10"></div></div>
+    <div class="form-group"><label for="res">Country of residence</label>
+      <div class="combo"><input id="res" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="res-list" autocomplete="off">
+        <ul id="res-list" role="listbox" hidden></ul></div></div>
+    <div class="form-group"><label for="town">Current city</label><input id="town" list="cities"><datalist id="cities"><option value="Delhi"><option value="Mumbai"><option value="Berlin"></datalist></div>
+
+    <h2>Education history</h2>
+    <div class="form-group"><label for="deg">Degree</label>
+      <select id="deg"><option value="">Please select</option><option>Bachelor's degree</option><option>Master's degree</option><option>Doctorate</option></select></div>
+  </form>
+</main>
+<script>
+  // A minimal type-to-search box, like the ones many portals use.
+  const COUNTRIES = ["Germany", "India", "Indonesia", "Nepal", "United States"];
+  const res = document.getElementById("res"), list = document.getElementById("res-list");
+  function show(q) {
+    list.replaceChildren(...COUNTRIES.filter(c => c.toLowerCase().includes(q.toLowerCase())).map(c => {
+      const li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = c;
+      li.addEventListener("mousedown", e => { e.preventDefault(); res.value = c; res.dataset.chosen = c; list.hidden = true; });
+      return li; }));
+    list.hidden = !q || !list.children.length;
+  }
+  res.addEventListener("input", () => { delete res.dataset.chosen; show(res.value); });
+</script>
+</body>
+</html>

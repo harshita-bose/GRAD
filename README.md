@@ -75,22 +75,39 @@ there is sent anywhere:
 - https://harshita-bose.github.io/GRAD/practice/register.html (built like the UCI registration page: email, names, 3-part birthdate, Continue)
 - https://harshita-bose.github.io/GRAD/practice/register-b.html (built like the UC Berkeley registration page: dropdowns labelled only Month / Day / Year)
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
+- https://harshita-bose.github.io/GRAD/practice/tricky.html (different wordings, other formats, type-to-search dropdowns)
+
+## How GradFill reads a question
+
+- **Every clue on the page:** the label, the section heading above it ("Recommender 2" → your
+  recommender #2), the page's own autofill hint, and the field's internal name (`fname`,
+  `birthdate_m`…). Many wordings are understood: "Given name(s)", "Surname / Family name",
+  "E-mail ID", "Mobile no.", "Pincode", "Nationality", "D.O.B."…
+- **Your value in the form's format:**
+  - **Dates:** any order or separator (DD-MM-YYYY, MM/YY…), or split month / day / year boxes.
+  - **Countries:** "India", "IND", "IN" or "Indian".
+  - **Phone:** a separate "+91 (India)" code box plus the number alone.
+  - **Yes/No:** Y/N.
+  - **Female/Male:** F/M.
+  - **Degree names:** "B.Tech" → "Bachelor's degree".
+- **Dropdowns, including type-to-search boxes,** are picked automatically when one option clearly
+  matches. If two options are equally close, GradFill asks instead.
+- **Filled automatically only when the evidence is strong:** a clear label, the page's autofill
+  hint, or two clues that agree. Anything else waits for your tick.
+- **Never filled with your details:** questions about someone else (emergency contact, parent,
+  guardian, spouse, sponsor).
+- **Still wrong somewhere?** Use **"Wrong detail? Choose which of your details goes here"** on that
+  row once. GradFill remembers your choice for that site.
 
 ## Known limits
 
-- It has not been tried on real school portals yet. Expect more **check** / **skip** rows there
-  until the matching rules are tuned per portal.
-- GradFill reads the section heading above each field. "First Name" under "Recommender 2" uses your
-  recommender #2, and "City" under an address heading is your address city.
-- If it still picks the wrong detail, open **"Wrong detail? Choose which of your details goes here"**
-  on that row. GradFill remembers your choice for that site; settings lists what you taught it.
-- Styled dropdowns that hide a real dropdown are filled. Type-to-search boxes with no real dropdown
-  behind them, and forms inside iframes, are not detected yet.
+- Forms inside iframes are not read yet.
 - Your data is per browser. Use **Export backup** in settings to move it, and keep that file private.
 
 ## Development
 
 ```bash
 pip install playwright==1.55.0
+node tests/test_labels.js         # how 40+ real-world question wordings are read
 python tests/test_extension.py   # loads the extension into Chromium and drives the practice portal
 ```

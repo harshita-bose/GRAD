@@ -28,46 +28,6 @@
     return e;
   }
 
-  function bigrams(s) { const b = new Set(); for (let i = 0; i < s.length - 1; i++) b.add(s.slice(i, i + 2)); return b; }
-  function similar(a, b) {
-    const x = bigrams(norm(a)), y = bigrams(norm(b));
-    if (!x.size || !y.size) return 0;
-    let n = 0; for (const g of x) if (y.has(g)) n++;
-    return (2 * n) / (x.size + y.size);
-  }
-
-  // Returns {opt, exact} for the first candidate value that matches an option.
-  function withAliases(cands) {
-    const out = [...cands];
-    for (const c of cands) {
-      const set = GF.COUNTRY_ALIASES.find(g => g.some(x => norm(x) === norm(c)));
-      if (set) out.push(...set);
-    }
-    return out;
-  }
-  function bestOption(options, candidates) {
-    const real = options.filter(o => clean(o.text) || o.value);
-    candidates = withAliases(candidates);
-    for (const c of candidates) {
-      const t = norm(c);
-      const hit = real.find(o => norm(o.text) === t || (o.value && norm(o.value) === t));
-      if (hit) return { opt: hit, exact: true };
-    }
-    const alias = { yes: ["y", "true"], no: ["n", "false"] };
-    for (const c of candidates) {
-      const hit = real.find(o => (alias[norm(c)] || []).includes(norm(o.text)));
-      if (hit) return { opt: hit, exact: true };
-    }
-    const c0 = String(candidates[0]);
-    const word = new RegExp("^" + c0.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i");
-    const starts = real.filter(o => word.test(clean(o.text)));
-    if (starts.length === 1) return { opt: starts[0], exact: false };
-    let best = null, score = 0;
-    for (const o of real) { const s = similar(c0, o.text); if (s > score) { score = s; best = o; } }
-    if (score >= 0.8) return { opt: best, exact: false };
-    return { opt: null, exact: false };
-  }
-
   // ---------- scan ----------
   function shown(el) { return el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden"; }
   function visible(el) {
@@ -152,9 +112,14 @@
   function scan() {
     const out = [], groups = new Map(), cache = new Map();
     let n = 0;
-    for (const el of document.querySelectorAll("input, select, textarea")) {
+    for (const el of document.querySelectorAll("input, select, textarea, [role=combobox]")) {
       if (el.closest("#gradfill-host")) continue;
-      const type = (el.type || el.tagName).toLowerCase();
+      const isDivCombo = !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName);
+      if (isDivCombo && (el.querySelector("input, select") || el.getAttribute("aria-disabled") === "true")) continue;
+      // a styled box that only displays a real <select> nearby: the select itself is filled instead
+      if (isDivCombo && [el.parentElement, el.parentElement?.parentElement, el.parentElement?.parentElement?.parentElement]
+        .some(a => a && a.querySelector("select"))) continue;
+      const type = isDivCombo ? "combobox" : (el.type || el.tagName).toLowerCase();
       if (["hidden", "submit", "button", "reset", "image"].includes(type)) continue;
       if (el.disabled || el.readOnly || !visible(el)) continue;
       el.dataset.gradfill = String(n);
@@ -162,7 +127,8 @@
         gid: String(n++), el, tag: el.tagName.toLowerCase(), type, name: el.name || "",
         required: el.required || el.getAttribute("aria-required") === "true",
         placeholder: el.placeholder || "", maxlength: el.maxLength > 0 ? el.maxLength : null,
-        section: sectionOf(el, cache),
+        section: sectionOf(el, cache), id: el.id || "", autocomplete: el.getAttribute("autocomplete") || "",
+        hintText: hintFor(el),
       };
       if (type === "radio" || type === "checkbox") {
         const key = type + ":" + (el.name || f.gid);
@@ -177,12 +143,27 @@
           const row = rowLabel(el);
           if (row) f.label = `${row} › ${f.label}`;
         }
-        f.current = el.value;
+        f.current = isDivCombo ? clean(el.innerText) : el.value;
         if (f.tag === "select") f.options = [...el.options].map(o => ({ text: clean(o.text), value: o.value }));
+        else if (el.list) { f.options = [...el.list.options].map(o => ({ text: clean(o.label || o.value), value: o.value })); f.datalist = true; }
+        else if (isDivCombo || el.getAttribute("role") === "combobox" || /^(list|both)$/.test(el.getAttribute("aria-autocomplete") || "")) f.combo = true;
       }
       out.push(f);
     }
+    // A separate "country code" box in the same question means the phone box wants the number alone.
+    for (const f of out) {
+      if (!/country ?code|dial(ing)? code|calling code|\bisd\b/i.test(f.label || "")) continue;
+      const box = f.el.closest(WRAP) || (f.el.parentElement && f.el.parentElement.parentElement);
+      for (const g of out) if (g !== f && box && box.contains(g.el)) g.codeSibling = true;
+    }
     return out;
+  }
+  // Format hints near a field ("Format: DD-MM-YYYY") and its aria-describedby text.
+  function hintFor(el) {
+    const ids = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+    const q = el.closest(".form_question, .form-group, .field, tr");
+    const near = q ? [...q.querySelectorAll(".hint, .form_hint, .help, .help-block, small, .description")].map(x => x.innerText) : [];
+    return clean([...ids.map(textOf), ...near].join(" ")).slice(0, 200);
   }
 
   // ---------- plan ----------
@@ -254,11 +235,8 @@
     if (part === "day") return { candidates: [d, String(Number(d))] };
     if (part === "year") return f.tag === "select" ? { candidates: [y] } : { value: y };
     if (f.tag === "select") return { note: "Date dropdown not understood — choose it yourself" };
-    const hint = (f.placeholder + " " + f.label).toLowerCase();
-    if (/dd\s*\/\s*mm/.test(hint)) return { value: `${d}/${mo}/${y}` };
-    if (/mm\s*\/\s*dd/.test(hint)) return { value: `${mo}/${d}/${y}` };
-    if (/yyyy-mm-dd/.test(hint)) return { value: iso };
-    if (/mm\s*\/\s*yy/.test(hint)) return { value: `${mo}/${y}` };
+    const byHint = GF.formatDateByHint(iso, `${f.placeholder} ${f.label} ${f.hintText || ""}`);
+    if (byHint) return { value: byHint };
     return { value: `${mo}/${d}/${y}`, note: "The form does not say which date format it wants — assumed U.S. MM/DD/YYYY" };
   }
 
@@ -311,15 +289,19 @@
       return { ...row, status: "upload", notes: [doc ? `Upload your ${doc[1]} here yourself` : "File upload — attach the right document yourself"] };
     }
 
-    const ctxLabel = (f.section ? f.section.word + " " : "") + label;
+    const ctxLabel = (f.section ? f.section.word + " " : "") + (f.label || "");
     const taught = S.maps[learnKey(f)];
     if (taught === "-") { row.taught = true; row.notes.push("You chose to leave this field alone on this site"); return row; }
-    const rule = taught ? [taught, null, "taught"] : GF.RULES.find(([, rx]) => rx.test(ctxLabel));
-    if (!rule) {
+    const pickd = taught ? { key: taught, conf: "taught" } : GF.pickKey(f, ctxLabel);
+    if (!pickd && ((f.section && f.section.sec === "other") || GF.OTHER_PERSON.test(label))) {
+      row.notes.push("Asks about someone else (e.g. an emergency contact) — GradFill never puts your details here");
+      return row;
+    }
+    if (!pickd) {
       if (f.required) row.notes.push("Required, but not in your details — answer it yourself, or choose a detail below");
       return row;
     }
-    const [key, , conf] = rule;
+    const { key, conf } = pickd;
     row.taught = conf === "taught";
     const r = resolve(key, f);
     row.key = r.path || key;
@@ -327,8 +309,9 @@
     if (r.err) { row.notes.push(r.err); return row; }
 
     const notes = [], soft = [];
-    let value = r.value, candidates = [value];
-    if (conf === "low") notes.push("Label match is uncertain — is this the right field?");
+    let value = r.value, variants = GF.variants(row.key, value, f);
+    if (conf === "low") notes.push("Not sure this question asks for this detail — check, or choose another below");
+    if (conf === "verify") soft.push(`Matched using ${pickd.why}`);
     if (row.taught) soft.push("Matched the way you taught GradFill on this site");
     if (r.list && r.fromHeading) soft.push(`From ${title(r.list)} #${r.index + 1}, because of the heading “${f.section.heading}”`);
     else if (r.list) {
@@ -339,32 +322,51 @@
     if (isDateKey(row.key)) {
       const d = formatDate(value, f);
       if (d.note) notes.push(d.note);
-      if (d.candidates) candidates = d.candidates;
-      if (d.value) value = candidates[0] = d.value;
+      if (d.candidates) variants = d.candidates;
+      if (d.value) { value = d.value; variants = [d.value]; }
       if (!d.value && !d.candidates) { row.notes = notes; return row; }
+    }
+    if (/phone$/.test(row.key)) {
+      const ph = GF.phoneParts(value);
+      if (/country ?code|dial(ing)? code|calling code|\bisd\b|^code$/i.test(label)) {
+        if (!ph.code) { row.notes.push("Your saved phone has no +country code"); return row; }
+        variants = GF.codeVariants(ph.code); value = variants[0];
+      } else if (f.codeSibling || /without (the )?(country )?code|national|local number/i.test(label) || (f.maxlength && f.maxlength <= 12 && value.length > f.maxlength)) {
+        value = ph.national; variants = [value];
+        soft.push("Number without the country code (the form asks for that separately)");
+      }
     }
     // "soft" notes: the value is certain but worth a second look; the row is still filled
     if (/confirm|re-?enter|verify|again/i.test(label)) soft.push("Confirmation field — check it matches the field above");
     if (GF.ALWAYS_CHECK.has(row.key.replace(/\.\d+\./, ".*."))) soft.push("Important detail — please double-check it on the page");
 
-    if (f.options) {
-      const { opt, exact } = bestOption(f.options, candidates);
-      if (!opt) {
-        notes.push(`No option matches "${value}" — choose it yourself`);
+    if (f.options && f.options.length) {
+      const c = GF.chooseOption(f.options, variants);
+      if (!c.opt) {
+        notes.push(`No option matches your "${value}" — choose it yourself`);
         row.notes = notes; return row;
       }
-      if (!exact) notes.push(`Closest option is "${opt.text}" (your details say "${value}")`);
-      else if (!candidates.some(c => norm(c) === norm(opt.text) || norm(c) === norm(opt.value))) soft.push(`Chose "${opt.text}" for your "${value}"`);
-      row.option = opt;
-      value = opt.text;
+      // a dropdown that lists your exact value is a second clue that this is the right question
+      if (conf === "low" && c.exact && f.options.length > 2 && !/^(yes|no|y|n|true|false)$/i.test(value)) {
+        notes.splice(notes.indexOf("Not sure this question asks for this detail — check, or choose another below"), 1);
+        soft.push(`Matched because this dropdown lists your “${value}”`);
+      }
+      if (!c.sure) notes.push(c.runnerUp ? `Can't tell between "${c.opt.text}" and "${c.runnerUp.text}" for your "${value}"` : `Closest option is "${c.opt.text}" (your details say "${value}")`);
+      else if (!c.exact || norm(c.opt.text) !== norm(value)) soft.push(`Chose "${c.opt.text}" for your "${value}"`);
+      row.option = c.opt;
+      value = c.opt.text;
       const cur = f.group ? f.options.find(o => o.el.checked) : null;
-      if (cur && cur !== opt) notes.push(`Currently "${cur.text}" — will be changed`);
+      if (cur && cur !== c.opt) notes.push(`Currently "${cur.text}" — will be changed`);
+    } else if (f.combo) {
+      soft.push("Type-to-search list — GradFill types your value and picks the matching option");
+      row.variants = variants;
     } else {
       if (f.maxlength && value.length > f.maxlength) notes.push(`${value.length} characters but the field allows ${f.maxlength} — it would be cut off`);
       if (f.current && norm(f.current) !== norm(value)) notes.push(`Already contains "${f.current}" — will be replaced`);
       if (f.current && norm(f.current) === norm(value)) soft.push("Already filled with this value");
     }
-    if (f.tag === "select" && f.current && f.options.find(o => o.value === f.current && clean(o.text)) && row.option && row.option.value !== f.current)
+    const curOpt = f.tag === "select" && f.current ? f.options.find(o => o.value === f.current) : null;
+    if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current)
       notes.push(`Currently "${f.options.find(o => o.value === f.current).text}" — will be changed`);
 
     Object.assign(row, { value, notes, soft, status: notes.length ? "flag" : soft.length ? "verify" : "ok" });
@@ -384,23 +386,65 @@
   }
   const fire = (el, ...types) => types.forEach(t => el.dispatchEvent(new Event(t, { bubbles: true })));
 
-  function fillRow(r) {
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+  async function waitFor(fn, ms) {
+    for (let t = 0; t < ms; t += 100) { const v = fn(); if (v && v.length) return v; await sleep(100); }
+    return fn() || [];
+  }
+  function listOptions(el) {
+    const ids = [el.getAttribute("aria-controls"), el.getAttribute("aria-owns")].filter(Boolean).join(" ").split(/\s+/).filter(Boolean);
+    const lists = ids.map(id => document.getElementById(id)).filter(Boolean);
+    const found = lists.length ? lists.flatMap(l => [...l.querySelectorAll("[role=option]")]) : [...document.querySelectorAll("[role=option]")];
+    return found.filter(o => !o.closest("#gradfill-host") && shown(o) && o.getAttribute("aria-disabled") !== "true")
+      .map(o => ({ text: clean(o.innerText), value: o.getAttribute("data-value") || "", el: o }));
+  }
+  function press(e) {
+    for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"])
+      e.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window }));
+  }
+  // Type-to-search boxes: type your value, wait for the list, pick the option that clearly matches.
+  async function fillCombo(r) {
+    const el = r.f.el, variants = r.variants || [r.value], isInput = el.tagName === "INPUT";
+    el.scrollIntoView({ block: "center" });
+    el.focus();
+    if (isInput) { setNative(el, variants[0]); fire(el, "input"); } else press(el);
+    let opts = await waitFor(() => listOptions(el), 2500);
+    if (!opts.length && isInput) { press(el); opts = await waitFor(() => listOptions(el), 1500); }
+    const c = GF.chooseOption(opts, variants);
+    if (!c.opt || !c.sure) {
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      if (isInput) { setNative(el, ""); fire(el, "input"); }
+      return !opts.length ? "No list appeared — choose it yourself" : c.opt ? `Can't tell which option is right (closest: "${c.opt.text}") — choose it yourself` : "No matching option in the list — choose it yourself";
+    }
+    press(c.opt.el);
+    r.value = c.opt.text;
+    await sleep(250);
+    return null;
+  }
+
+  async function fillRow(r) {
     const { f } = r, el = f.el;
     if (!el.isConnected) return "Field disappeared from the page — rescan";
     if (f.group) {
-      const o = r.option || bestOption(f.options, [r.value]).opt;
+      const o = r.option;
       if (!o) return `No option matches "${r.value}"`;
       if (!o.el.checked) o.el.click();
       if (!o.el.checked) { o.el.checked = true; fire(o.el, "input", "change"); }
       return null;
     }
     if (f.tag === "select") {
-      const o = bestOption(f.options, [r.value]).opt;
+      const o = r.option || (f.options || []).find(x => x.text === r.value);
       if (!o) return `No option matches "${r.value}"`;
       el.value = o.value;
       fire(el, "input", "change");
       return null;
     }
+    if (f.datalist && r.option) {
+      el.focus(); setNative(el, r.option.value); fire(el, "input", "change"); el.blur();
+      r.value = r.option.value;
+      return null;
+    }
+    if (f.combo) return fillCombo(r);
     el.focus();
     setNative(el, r.value);
     fire(el, "input", "change");
@@ -410,6 +454,11 @@
 
   function readBack(r) {
     const { f } = r;
+    if (f.combo) {
+      if (f.el.tagName !== "INPUT") return clean(f.el.innerText);
+      const box = f.el.closest("[class*=container], [class*=control], [class*=select], [class*=combo]") || f.el.parentElement;
+      return clean(f.el.value || (box ? box.innerText : ""));
+    }
     if (f.group) return (f.options.find(o => o.el.checked) || {}).text || "";
     if (f.tag === "select") { const o = f.el.options[f.el.selectedIndex]; return o ? clean(o.text) : ""; }
     return f.el.value;
@@ -427,9 +476,10 @@
     const todo = S.rows.filter(r => r.approved && FILLABLE.has(r.status) && r.value !== "");
     let ok = 0, bad = 0;
     for (const r of todo) {
-      r.error = fillRow(r);
+      r.error = await fillRow(r);
       const actual = r.error ? "" : readBack(r);
-      r.result = { actual, ok: !r.error && norm(actual) === norm(r.value) };
+      const same = r.f.combo ? norm(actual).includes(norm(r.value)) : norm(actual) === norm(r.value);
+      r.result = { actual, ok: !r.error && same };
       r.result.ok ? ok++ : bad++;
       if (r.result.ok) r.approved = false; // done: don't offer to fill it again
       mark(elOf(r), !r.result.ok ? COLORS.bad : r.status === "ok" ? COLORS.ok : COLORS.verify);
