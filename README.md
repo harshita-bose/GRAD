@@ -73,6 +73,7 @@ school's name in the unlock box at the bottom of the panel, then click Submit yo
 The practice portal is built like Slate, the platform UCI and many other schools use. Nothing typed
 there is sent anywhere:
 - https://harshita-bose.github.io/GRAD/practice/register.html (built like the UCI registration page: email, names, 3-part birthdate, Continue)
+- https://harshita-bose.github.io/GRAD/practice/register-b.html (built like the UC Berkeley registration page: dropdowns labelled only Month / Day / Year)
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
 
 ## Known limits

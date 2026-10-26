@@ -129,6 +129,19 @@
     if (q) { const l = q.querySelector(".form_label, label, legend, th, .label"); if (l) return l.innerText; }
     return el.placeholder || el.title || el.name || "";
   }
+  // "Month" / "Day" / "Year" on their own say nothing about WHICH date: borrow the row's label.
+  const DATE_PART = /^(month|day|year|mm|dd|yy|yyyy)$/i;
+  function rowLabel(el) {
+    for (let a = el.parentElement, depth = 0; a && depth < 4; a = a.parentElement, depth++) {
+      const before = [...a.querySelectorAll(".form_label, label, legend, th, .label, dt")].filter(x => {
+        const t = clean(x.innerText);
+        return t && !x.contains(el) && !DATE_PART.test(t) && (x.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      if (before.length) return clean(before[before.length - 1].innerText); // the nearest label before it
+      if (a.matches("form, fieldset, tr, .form_question, .question, .form-group")) break;
+    }
+    return "";
+  }
   function questionLabel(el) {
     const fs = el.closest("fieldset"); if (fs) { const lg = fs.querySelector("legend"); if (lg) return lg.innerText; }
     const q = el.closest(".form_question, .question, .form-group, .field, tr");
@@ -159,6 +172,11 @@
         groups.set(key, f);
       } else {
         f.label = clean(labelFor(el));
+        if (DATE_PART.test(f.label)) {
+          f.part = f.label.toLowerCase();
+          const row = rowLabel(el);
+          if (row) f.label = `${row} › ${f.label}`;
+        }
         f.current = el.value;
         if (f.tag === "select") f.options = [...el.options].map(o => ({ text: clean(o.text), value: o.value }));
       }
@@ -205,6 +223,8 @@
   }
 
   function datePart(f) {
+    const part = { mm: "month", dd: "day", yy: "year", yyyy: "year" }[f.part] || f.part;
+    if (part && f.tag !== "select") return part;
     if (f.tag !== "select") {
       const p = norm(f.placeholder || f.label);
       if (p === "mm" || p === "month") return "month";

@@ -155,6 +155,14 @@ def main():
         assert panel(page).locator(".res.bad").count() == 0
         if os.environ.get("GF_SHOTS"):
             page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "register.png"))
+        # Berkeley-style: dropdowns labelled only "Month" / "Day" / "Year" beside a "Birthdate" row label
+        page.goto(base + "/practice/register-b.html")
+        open_gradfill(sw)
+        expect(panel(page).locator(".msg.good")).to_contain_text("Filled and checked 6 field(s)")
+        assert (page.input_value("#bm"), page.input_value("#bd"), page.input_value("#by")) == ("5", "17", "2003")
+        expect(card(page, "Birthdate › Month")).to_be_visible()
+        page.goto(base + "/practice/register.html")
+        open_gradfill(sw)
         page.click("text=Continue")  # the user moves on; GradFill never does
         page.wait_for_url("**/register-2.html")
         open_gradfill(sw)
@@ -229,7 +237,7 @@ def main():
 
         # activity logged to the tracker (the app is linked by the portal's hostname)
         acts = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[0]")
-        assert acts["status"] == "In progress" and len(acts["activity"]) == 3, acts
+        assert acts["status"] == "In progress" and len(acts["activity"]) == 5, acts
         page.goto(base + "/index.html")
         expect(page.locator(".app .last")).to_contain_text("Filled")
         if os.environ.get("GF_SHOTS"):
