@@ -127,6 +127,19 @@ document.getElementById("import").addEventListener("change", async e => {
 });
 window.addEventListener("beforeunload", e => { if (dirty) e.preventDefault(); });
 
+async function showTaught() {
+  const { mappings = {} } = await chrome.storage.local.get("mappings");
+  const box = document.getElementById("taught");
+  const sites = Object.entries(mappings).filter(([, m]) => Object.keys(m).length);
+  box.replaceChildren(...(sites.length ? sites.map(([host, m]) => h("div", { class: "entry" },
+    h("h3", {}, host, " ", h("button", { type: "button", onclick: async () => {
+      delete mappings[host]; await chrome.storage.local.set({ mappings }); showTaught();
+    } }, "Forget this site")),
+    h("ul", {}, Object.entries(m).map(([q, key]) => h("li", { class: "muted" }, `${q.replace(/^\w+:/, "")} → ${key === "-" ? "leave alone" : key.replace(".*.", " → ")}`)))))
+    : [h("p", { class: "muted" }, "Nothing yet.")]));
+}
+showTaught();
+
 const auto = document.getElementById("autoFill");
 auto.addEventListener("change", async () => {
   await chrome.storage.local.set({ settings: { autoFill: auto.checked } });

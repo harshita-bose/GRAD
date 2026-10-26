@@ -66,7 +66,12 @@ there is sent anywhere:
 
 - It has not been tried on real school portals yet. Expect more **check** / **skip** rows there
   until the matching rules are tuned per portal.
-- Forms inside iframes and custom dropdown widgets (type-to-search lists) are not detected yet.
+- GradFill reads the section heading above each field. "First Name" under "Recommender 2" uses your
+  recommender #2, and "City" under an address heading is your address city.
+- If it still picks the wrong detail, open **"Wrong detail? Choose which of your details goes here"**
+  on that row. GradFill remembers your choice for that site; settings lists what you taught it.
+- Styled dropdowns that hide a real dropdown are filled. Type-to-search boxes with no real dropdown
+  behind them, and forms inside iframes, are not detected yet.
 - Your data is per browser. Use **Export backup** in settings to move it, and keep that file private.
 
 ## Development

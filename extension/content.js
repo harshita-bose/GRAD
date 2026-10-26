@@ -8,6 +8,7 @@
     profile: null, tracker: null, appId: "", rows: [], unlocked: false, filledOnce: false,
     ctx: Object.fromEntries(GF.LIST_SECTIONS.map(s => [s, 0])),
     active: null, // list section that bare "start/end date" fields refer to
+    maps: {}, allMaps: {}, // fields you taught GradFill, per site: { host: { learnKey: profileKey | "-" } }
   };
 
   // ---------- helpers ----------
@@ -36,8 +37,17 @@
   }
 
   // Returns {opt, exact} for the first candidate value that matches an option.
+  function withAliases(cands) {
+    const out = [...cands];
+    for (const c of cands) {
+      const set = GF.COUNTRY_ALIASES.find(g => g.some(x => norm(x) === norm(c)));
+      if (set) out.push(...set);
+    }
+    return out;
+  }
   function bestOption(options, candidates) {
     const real = options.filter(o => clean(o.text) || o.value);
+    candidates = withAliases(candidates);
     for (const c of candidates) {
       const t = norm(c);
       const hit = real.find(o => norm(o.text) === t || (o.value && norm(o.value) === t));
@@ -59,10 +69,52 @@
   }
 
   // ---------- scan ----------
+  function shown(el) { return el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden"; }
   function visible(el) {
     if (el.type === "file") return true; // custom uploaders often hide the real input
-    const r = el.getClientRects();
-    return r.length > 0 && getComputedStyle(el).visibility !== "hidden";
+    if (shown(el)) return true;
+    // styled dropdowns (select2, chosen, …) hide the real <select> next to a visible widget
+    return el.tagName === "SELECT" && !!el.parentElement && shown(el.parentElement) && el.options.length > 1;
+  }
+  // The element to outline / scroll to: the visible widget when the real select is hidden.
+  function shownTarget(el) {
+    if (shown(el)) return el;
+    const sib = el.nextElementSibling;
+    return sib && shown(sib) ? sib : el.parentElement;
+  }
+
+  // ---------- section headings ----------
+  const HEAD_SEL = "h1, h2, h3, h4, h5, h6, legend, [role=heading], caption, .section-title, .form_section_header";
+  function headingLevel(h) {
+    const m = /^H(\d)$/.exec(h.tagName);
+    return m ? Number(m[1]) : Number(h.getAttribute("aria-level")) || 7;
+  }
+  function headingsFor(scope) {
+    return [...scope.querySelectorAll(HEAD_SEL)].filter(h => !h.closest("#gradfill-host, header, nav, footer") &&
+      shown(h) && clean(h.innerText).length > 0 && clean(h.innerText).length < 80);
+  }
+  const ORDINALS = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 };
+  // Which part of your details the field's section is about, from the heading outline above it.
+  function sectionOf(el, cache) {
+    const scope = el.closest("form") || el.closest("main, [role=main]") || document.body;
+    if (!cache.has(scope)) cache.set(scope, headingsFor(scope));
+    const hs = cache.get(scope);
+    let i = -1;
+    for (let k = 0; k < hs.length; k++) if (hs[k].compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) i = k; else break;
+    let level = 99;
+    for (; i >= 0; i--) {
+      const h = hs[i], lv = headingLevel(h);
+      if (lv >= level) continue; // only walk up the outline: parent headings, not earlier siblings
+      level = lv;
+      const text = clean(h.innerText);
+      const hit = GF.HEADINGS.find(([, rx]) => rx.test(text));
+      if (hit) {
+        const num = /\b(\d{1,2})\b/.exec(text) || /\b(first|second|third|fourth|fifth)\b/i.exec(text);
+        const index = num ? (Number(num[1]) || ORDINALS[num[1].toLowerCase()]) - 1 : null;
+        return { sec: hit[0], word: hit[2], index, heading: text };
+      }
+    }
+    return null;
   }
   const textOf = id => { const n = document.getElementById(id); return n ? n.innerText : ""; };
   const WRAP = ".form_question, .question, .form-group, .field, fieldset, tr, li";
@@ -85,7 +137,7 @@
   }
 
   function scan() {
-    const out = [], groups = new Map();
+    const out = [], groups = new Map(), cache = new Map();
     let n = 0;
     for (const el of document.querySelectorAll("input, select, textarea")) {
       if (el.closest("#gradfill-host")) continue;
@@ -97,6 +149,7 @@
         gid: String(n++), el, tag: el.tagName.toLowerCase(), type, name: el.name || "",
         required: el.required || el.getAttribute("aria-required") === "true",
         placeholder: el.placeholder || "", maxlength: el.maxLength > 0 ? el.maxLength : null,
+        section: sectionOf(el, cache),
       };
       if (type === "radio" || type === "checkbox") {
         const key = type + ":" + (el.name || f.gid);
@@ -116,21 +169,30 @@
 
   // ---------- plan ----------
   const FILLABLE = new Set(["ok", "verify", "flag"]);
-  function resolve(key) {
+  function pick(obj, k) {
+    const d = GF.DERIVED[k];
+    if (d) return d.from.map(x => obj[x]).filter(Boolean).join(" ");
+    return obj[k];
+  }
+  function resolve(key, f) {
     let parts = key.split(".");
+    const sect = f && f.section;
     if (parts[0] === "*") {
-      if (!S.active) return { err: "Date field: choose which Education / Work entry this page is about (top of panel)" };
-      parts = [S.active, "*", parts[1]];
+      const active = sect && ["education", "employment"].includes(sect.sec) ? sect.sec : S.active;
+      if (!active) return { err: "Date field: choose which Education / Work entry this page is about (top of panel)" };
+      parts = [active, "*", parts[1]];
     }
     const [sec, a, b] = parts;
     const section = S.profile?.[sec];
     if (!section) return { err: "Not in your details" };
     if (a === "*") {
-      const i = S.ctx[sec] || 0, entry = section[i];
-      const v = entry && entry[b];
-      return v ? { value: String(v), list: sec, index: i, path: `${sec}.${i}.${b}` } : { err: `Empty in your details (${title(sec)} #${i + 1})`, list: sec };
+      const fromHeading = sect && sect.sec === sec && sect.index != null && sect.index < section.length;
+      const i = fromHeading ? sect.index : S.ctx[sec] || 0, entry = section[i];
+      const v = entry && pick(entry, b);
+      const base = { list: sec, index: i, fromHeading, path: `${sec}.${i}.${b}` };
+      return v ? { ...base, value: String(v) } : { ...base, err: `Empty in your details (${title(sec)} #${i + 1}${fromHeading ? `, from the heading “${sect.heading}”` : ""})` };
     }
-    const v = section[a];
+    const v = pick(section, a);
     return v ? { value: String(v), path: key } : { err: "Empty in your details" };
   }
   const title = sec => (GF.SECTIONS.find(s => s.id === sec) || {}).title || sec;
@@ -145,7 +207,11 @@
   function datePart(f) {
     if (f.tag !== "select") {
       const p = norm(f.placeholder || f.label);
-      return p === "mm" || p === "month" ? "month" : p === "dd" || p === "day" ? "day" : p === "yyyy" || p === "year" ? "year" : null;
+      if (p === "mm" || p === "month") return "month";
+      if (p === "dd" || p === "day") return "day";
+      if (p === "yyyy" || p === "year" || f.maxlength === 4) return "year";
+      if (/\byear\b/i.test(f.label) && !/month|day|date|mm|dd/i.test(f.label + f.placeholder)) return "year";
+      return null;
     }
     const t = f.options.map(o => norm(o.text)).filter(Boolean);
     if (t.some(x => MONTHS.includes(x) || MONTHS.some(m => m.slice(0, 3) === x))) return "month";
@@ -166,7 +232,7 @@
     const part = datePart(f);
     if (part === "month") return { candidates: [MONTHS[mi], MONTHS[mi].slice(0, 3), mo, String(Number(mo))] };
     if (part === "day") return { candidates: [d, String(Number(d))] };
-    if (part === "year") return { candidates: [y] };
+    if (part === "year") return f.tag === "select" ? { candidates: [y] } : { value: y };
     if (f.tag === "select") return { note: "Date dropdown not understood — choose it yourself" };
     const hint = (f.placeholder + " " + f.label).toLowerCase();
     if (/dd\s*\/\s*mm/.test(hint)) return { value: `${d}/${mo}/${y}` };
@@ -181,6 +247,38 @@
     return null;
   }
 
+  // Same question on the same site → same key, so a choice you make once is reused.
+  const learnKey = f => (f.section ? f.section.sec + ":" : "") + norm(f.label || f.name);
+
+  async function teach(r, key) {
+    const k = learnKey(r.f);
+    if (key) S.maps[k] = key; else delete S.maps[k];
+    S.allMaps[location.hostname] = S.maps;
+    await chrome.storage.local.set({ mappings: S.allMaps });
+    const fresh = planField(r.f);
+    fresh.n = r.n;
+    S.rows[r.n - 1] = fresh;
+    render(h("div", { class: "msg" }, key === "-" ? `GradFill will leave “${r.label}” alone on this site.`
+      : key ? `Remembered for ${location.hostname}: “${r.label}” → ${keyLabel(key)}. Press Fill to use it.`
+      : `“${r.label}” is back to automatic matching.`));
+  }
+  function keyLabel(key) {
+    const [sec, a, b] = key.split("."), s = GF.SECTIONS.find(x => x.id === sec);
+    const k = a === "*" ? b : a;
+    const f = s && (s.fields.find(x => x.k === k) || (GF.DERIVED[k] && { label: GF.DERIVED[k].label }));
+    return `${s ? s.title : sec} → ${f ? f.label : k}`;
+  }
+  function teachOptions(current) {
+    const groups = GF.SECTIONS.map(s => {
+      const fields = [...s.fields];
+      if (s.id === "personal" || s.id === "recommenders") fields.push({ k: "full_name", label: GF.DERIVED.full_name.label });
+      return h("optgroup", { label: s.list ? `${s.title} (entry from the heading or the picker above)` : s.title },
+        fields.map(f => { const key = s.list ? `${s.id}.*.${f.k}` : `${s.id}.${f.k}`;
+          return h("option", { value: key, selected: key === current }, `${s.title} → ${f.label}`); }));
+    });
+    return [h("option", { value: "" }, "— automatic —"), h("option", { value: "-", selected: current === "-" }, "— leave this field alone —"), ...groups];
+  }
+
   function planField(f) {
     const label = f.label || f.name || "(unlabelled field)";
     const row = { f, label, key: null, value: "", status: "none", notes: [], soft: [], approved: false, list: null };
@@ -193,24 +291,31 @@
       return { ...row, status: "upload", notes: [doc ? `Upload your ${doc[1]} here yourself` : "File upload — attach the right document yourself"] };
     }
 
-    const rule = GF.RULES.find(([, rx]) => rx.test(label));
+    const ctxLabel = (f.section ? f.section.word + " " : "") + label;
+    const taught = S.maps[learnKey(f)];
+    if (taught === "-") { row.taught = true; row.notes.push("You chose to leave this field alone on this site"); return row; }
+    const rule = taught ? [taught, null, "taught"] : GF.RULES.find(([, rx]) => rx.test(ctxLabel));
     if (!rule) {
-      if (f.required) row.notes.push("Required, but not in your details — answer it yourself");
+      if (f.required) row.notes.push("Required, but not in your details — answer it yourself, or choose a detail below");
       return row;
     }
     const [key, , conf] = rule;
-    const r = resolve(key);
+    row.taught = conf === "taught";
+    const r = resolve(key, f);
     row.key = r.path || key;
     row.list = r.list || (key.startsWith("*") ? S.active : null);
     if (r.err) { row.notes.push(r.err); return row; }
 
-    const notes = [];
+    const notes = [], soft = [];
     let value = r.value, candidates = [value];
     if (conf === "low") notes.push("Label match is uncertain — is this the right field?");
-    if (r.list) {
+    if (row.taught) soft.push("Matched the way you taught GradFill on this site");
+    if (r.list && r.fromHeading) soft.push(`From ${title(r.list)} #${r.index + 1}, because of the heading “${f.section.heading}”`);
+    else if (r.list) {
       const filled = (S.profile[r.list] || []).filter(e => Object.values(e).some(Boolean)).length;
       if (filled > 1) notes.push(`Using ${title(r.list)} #${r.index + 1} — is that the right entry for this page?`);
     }
+    if (/full_name$/.test(row.key)) soft.push("Full name built as first + middle + last — check the order this form wants");
     if (isDateKey(row.key)) {
       const d = formatDate(value, f);
       if (d.note) notes.push(d.note);
@@ -219,7 +324,6 @@
       if (!d.value && !d.candidates) { row.notes = notes; return row; }
     }
     // "soft" notes: the value is certain but worth a second look; the row is still filled
-    const soft = [];
     if (/confirm|re-?enter|verify|again/i.test(label)) soft.push("Confirmation field — check it matches the field above");
     if (GF.ALWAYS_CHECK.has(row.key.replace(/\.\d+\./, ".*."))) soft.push("Important detail — please double-check it on the page");
 
@@ -230,6 +334,7 @@
         row.notes = notes; return row;
       }
       if (!exact) notes.push(`Closest option is "${opt.text}" (your details say "${value}")`);
+      else if (!candidates.some(c => norm(c) === norm(opt.text) || norm(c) === norm(opt.value))) soft.push(`Chose "${opt.text}" for your "${value}"`);
       row.option = opt;
       value = opt.text;
       const cur = f.group ? f.options.find(o => o.el.checked) : null;
@@ -291,7 +396,7 @@
   }
 
   const COLORS = { ok: "#1f9d55", verify: "#e8a400", bad: "#d93025", flag: "#e8a400", find: "#2a5bd7" };
-  const elOf = r => (r.f.group ? (r.option || r.f.options[0]).el : r.f.el);
+  const elOf = r => (r.f.group ? (r.option || r.f.options[0]).el : shownTarget(r.f.el));
   function mark(el, color, dashed) {
     const target = el.type === "radio" ? el.closest("fieldset, .form_question, label") || el : el;
     target.style.outline = color ? `2px ${dashed ? "dashed" : "solid"} ${color}` : "";
@@ -386,6 +491,9 @@
     .card.ok { border-left-color: #1f9d55; } .card.verify { border-left-color: #e8a400; }
     .card.flag { border-left-color: #e8a400; border-left-style: dashed; }
     .soft { font-size: 12px; margin: 4px 0 0; color: #5b6475; }
+    .where { font-weight: 400; color: #5b6475; }
+    .teach { margin-top: 6px; font-size: 12px; } .teach summary { cursor: pointer; color: #2a5bd7; }
+    .teach select { margin-top: 4px; font-size: 13px; }
     .card.manual, .card.upload { border-left-color: #6b4fbb; } .card.none { border-left-color: #9aa3b2; }
     .top { display: flex; gap: 8px; align-items: flex-start; }
     .top .lbl { flex: 1; font-weight: 600; cursor: pointer; }
@@ -469,7 +577,8 @@
     const badge = { ok: "ready", verify: "verify", flag: "decide", manual: "you", upload: "upload", none: "skip" }[r.status];
     const box = fillable ? h("input", { type: "checkbox", "aria-label": `Fill ${r.label}`, checked: r.approved,
       onchange: e => { r.approved = e.target.checked; render(); } }) : null;
-    const lbl = h("span", { class: "lbl", title: "Show on page", onclick: () => locate(r) }, r.label, r.f.required ? " *" : "");
+    const where = r.f.section && !norm(r.label).includes(norm(r.f.section.heading)) ? h("span", { class: "where" }, `${r.f.section.heading} › `) : null;
+    const lbl = h("span", { class: "lbl", title: "Show on page", onclick: () => locate(r) }, where, r.label, r.f.required ? " *" : "");
     const el = h("div", { class: `card ${r.status}` }, h("div", { class: "top" }, box, lbl, h("span", { class: "badge" }, badge)));
 
     if (fillable || (r.status === "none" && r.key && r.f.type !== "file")) {
@@ -490,6 +599,12 @@
         } });
       }
       el.append(h("div", { class: "val" }, input));
+    }
+    if (r.status !== "manual" && r.status !== "upload") {
+      const current = S.maps[learnKey(r.f)] || "";
+      el.append(h("details", { class: "teach", open: !!current && current !== "" && r.status === "none" },
+        h("summary", {}, current ? "Taught on this site — change" : "Wrong detail? Choose which of your details goes here"),
+        h("select", { "aria-label": `Which of your details goes in ${r.label}`, onchange: e => teach(r, e.target.value) }, teachOptions(current))));
     }
     for (const n of r.notes) el.append(h("p", { class: "note" }, "⚠ ", n));
     for (const n of r.soft || []) el.append(h("p", { class: "soft" }, "ⓘ ", n));
@@ -544,7 +659,9 @@
   };
 
   async function load() {
-    const got = await chrome.storage.local.get(["profile", "tracker", "settings"]);
+    const got = await chrome.storage.local.get(["profile", "tracker", "settings", "mappings"]);
+    S.allMaps = got.mappings || {};
+    S.maps = S.allMaps[location.hostname] || {};
     S.autoFill = (got.settings || {}).autoFill !== false; // on unless you turn it off in settings
     S.profile = got.profile || null;
     S.tracker = got.tracker || null;

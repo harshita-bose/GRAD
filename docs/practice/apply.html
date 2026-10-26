@@ -10,6 +10,8 @@
   fieldset { border: 0; padding: 0; margin: 0 0 14px; } fieldset label { margin-right: 14px; }
   form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
   #done { display: none; }
+  table.rec2 td { padding: 4px 6px; } table.rec2 td:first-child { text-align: right; font-size: 14px; }
+  .fake-select { border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; min-width: 200px; background: var(--bg); }
 </style>
 </head>
 <body>
@@ -17,6 +19,10 @@
 <main>
   <form id="f" onsubmit="event.preventDefault(); document.getElementById('done').style.display='block'; document.body.dataset.submitted='yes';">
     <h2>Application — Personal &amp; Academic</h2>
+  <div class="form_question"><div class="form_label"><label for="pname">Name of Participant</label></div>
+    <div class="form_responses"><input id="pname" name="pname" type="text"></div></div>
+  <div class="form_question"><div class="form_label"><label for="badge">Badge name</label></div>
+    <div class="form_responses"><input id="badge" name="badge" type="text"></div></div>
   <div class="form_question"><div class="form_label"><label for="middle">Middle Name</label></div>
     <div class="form_responses"><input id="middle" name="middle" type="text" ></div></div>
   <div class="form_question"><div class="form_label"><label for="phone">Mobile Phone <span class="req">*</span></label></div>
@@ -55,6 +61,24 @@
     <div class="form_responses"><input id="rl" name="rl" type="text" ></div></div>
   <div class="form_question"><div class="form_label"><label for="re">Recommender Email</label></div>
     <div class="form_responses"><input id="re" name="re" type="email" ></div></div>
+    <h2>Recommender 2</h2>
+    <table class="rec2"><tbody>
+      <tr><td><label for="r2first">First Name</label></td><td><input id="r2first" name="r2first"></td></tr>
+      <tr><td><label for="r2last">Last Name</label></td><td><input id="r2last" name="r2last"></td></tr>
+      <tr><td><label for="r2title">Title</label></td><td><input id="r2title" name="r2title"></td></tr>
+      <tr><td><label for="r2inst">Institution/Organization</label></td><td><input id="r2inst" name="r2inst"></td></tr>
+      <tr><td><label for="r2a1">Business Address Line 1</label></td><td><input id="r2a1" name="r2a1"></td></tr>
+      <tr><td><label for="r2a2">Business Address Line 2</label></td><td><input id="r2a2" name="r2a2"></td></tr>
+      <tr><td><label for="r2city">City</label></td><td><input id="r2city" name="r2city"></td></tr>
+      <tr><td><label for="r2ctry">Country</label></td><td>
+        <select id="r2ctry" name="r2ctry" style="display:none"><option value=""></option><option value="DE">Germany</option><option value="IN">India</option><option value="US">United States</option></select>
+        <div class="fake-select" id="r2ctry-widget" role="combobox" aria-label="Country">Select…</div></td></tr>
+      <tr><td><label for="r2zip">Postal Code</label></td><td><input id="r2zip" name="r2zip"></td></tr>
+      <tr><td><label for="r2state">State/Province</label></td><td><input id="r2state" name="r2state"></td></tr>
+    </tbody></table>
+    <script>document.getElementById("r2ctry").addEventListener("change", e => {
+      document.getElementById("r2ctry-widget").textContent = e.target.selectedOptions[0].text || "Select…"; });</script>
+    <h2>Documents</h2>
   <div class="form_question"><div class="form_label"><label for="sop">Upload Statement of Purpose</label></div>
     <div class="form_responses"><input id="sop" name="sop" type="file" ></div></div>
   <div class="form_question"><div class="form_label"><label for="fav">What is your favourite campus building? <span class="req">*</span></label></div>

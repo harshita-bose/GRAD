@@ -26,7 +26,10 @@ PROFILE = {
     "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics",
                    "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"}, {}, {}],
     "employment": [{}, {}, {}],
-    "recommenders": [{"first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in"}, {}, {}, {}],
+    "recommenders": [{"first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in"},
+                     {"first_name": "Tim", "last_name": "Schroeder", "title": "Professor",
+                      "institution": "Humboldt University of Berlin", "city": "Berlin", "country": "Germany",
+                      "postal_code": "10117"}, {}, {}],
     "tests": {},
 }
 
@@ -171,14 +174,32 @@ def main():
         assert "upload" in card(page, "Statement of Purpose").get_attribute("class")
         assert "manual" in card(page, "I certify").get_attribute("class")
         assert "Required" in card(page, "favourite campus").inner_text()
-        assert "choose which Education" in card(page, "Dates Attended From").inner_text()
-        panel(page).locator("label", has_text="Dates on this page are for").locator("select").select_option("education")
+        # under the "Most recent institution" heading, dates are known to be education dates
         expect(card(page, "Dates Attended From").locator("input[type=text]")).to_have_value("08/2023")
+        # section headings: "First Name" under "Recommender 2" is recommender #2, not the applicant
+        assert (page.input_value("#r2first"), page.input_value("#r2last"), page.input_value("#r2title")) == \
+            ("Tim", "Schroeder", "Professor")
+        assert page.input_value("#r2inst") == "Humboldt University of Berlin" and page.input_value("#r2city") == "Berlin"
+        assert page.input_value("#r2zip") == "10117" and page.input_value("#r2a1") == ""
+        assert page.input_value("#r2ctry") == "DE" and page.inner_text("#r2ctry-widget") == "Germany"  # styled dropdown
+        r2 = card(page, "Recommender 2 › First Name")
+        assert "because of the heading “Recommender 2”" in r2.inner_text(), r2.inner_text()
+        # "Name of Participant" → full name, but only after you tick it
+        assert page.input_value("#pname") == ""
+        expect(card(page, "Name of Participant").locator("input[type=text]")).to_have_value("Test Applicant")
+        # teach: "Badge name" should be the first name on this site
+        teach = card(page, "Badge name").locator("details.teach")
+        teach.locator("summary").click()
+        teach.locator("select").select_option("personal.first_name")
+        expect(panel(page).locator(".msg")).to_contain_text("Remembered for 127.0.0.1")
+        expect(card(page, "Badge name").locator("input[type=text]")).to_have_value("Test")
         for c in panel(page).locator(".card.flag").all():
             c.locator("input[type=checkbox]").check()
         panel(page).locator("button", has_text="Fill").click()
         expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
         if os.environ.get("GF_SHOTS"):
+            page.locator("#r2first").scroll_into_view_if_needed()
+            r2.scroll_into_view_if_needed()
             page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "panel.png"))
         assert panel(page).locator(".res.bad").count() == 0, panel(page).locator(".res.bad").all_inner_texts()
         vals = {k: page.input_value(f"#{k}") for k in ["phone", "a1", "a2", "city", "zip", "inst", "major", "from", "to", "gpa", "rf", "re"]}
@@ -188,6 +209,9 @@ def main():
         assert page.input_value("#ctry") == "India (IN)" and page.is_checked("[name=usc][value=N]")
         assert not page.is_checked("[name=hisp][value=Y]") and not page.is_checked("[name=hisp][value=N]")
         assert page.input_value("#fav") == ""
+        assert page.input_value("#pname") == "Test Applicant" and page.input_value("#badge") == "Test"
+        maps = sw.evaluate("async () => (await chrome.storage.local.get('mappings')).mappings")
+        assert maps == {"127.0.0.1": {"badgename": "personal.first_name"}}, maps
 
         # submit guard
         page.click("text=Submit Application")

@@ -85,6 +85,12 @@ GF.SECTIONS = [
     { k: "email", label: "Email", type: "email" },
     { k: "phone", label: "Phone", type: "tel" },
     { k: "relationship", label: "Relationship to you" },
+    { k: "address_line1", label: "Business address line 1" },
+    { k: "address_line2", label: "Business address line 2" },
+    { k: "city", label: "City" },
+    { k: "state", label: "State / province" },
+    { k: "postal_code", label: "Postal code" },
+    { k: "country", label: "Country" },
   ] },
 ];
 
@@ -106,17 +112,31 @@ GF.MANUAL = [
 GF.SUBMIT_LIKE = /submit|\bpay\b|payment|certify|finali[sz]e|sign and/i;
 
 // [profile key, label pattern, confidence]. First match wins, so specific rules go first.
-// "*" is the list entry you pick in the panel (Education #1, Recommender #2, ...).
-// "low" confidence rows are always flagged for review.
+// Patterns are tested against "<section> <label>", where <section> comes from the heading above the
+// field ("recommender", "education", "employment", "address", "citizenship" or nothing). So
+// "First Name" under a "Recommender 2" heading is tested as "recommender first name".
+// "*" is the list entry: taken from the heading's number when there is one ("Recommender 2" → #2),
+// otherwise the entry picked in the panel. "low" confidence rows are never filled without your tick.
+const REC = "(recommend|referee|reference|evaluator|letter writer)";
+const EDU = "(education|institution|college|universit|school)";
+const EMP = "(employment|employer|work|job|company)";
+const rx = (s, f = "i") => new RegExp(s, f);
 GF.RULES = [
-  ["recommenders.*.first_name", /(recommend|referee|reference|evaluator).*(first|given)|(first|given).*(recommend|referee|evaluator)/i, "high"],
-  ["recommenders.*.last_name", /(recommend|referee|reference|evaluator).*(last|family|sur)|(last|family).*(recommend|referee|evaluator)/i, "high"],
-  ["recommenders.*.email", /(recommend|referee|reference|evaluator).*e-?mail/i, "high"],
-  ["recommenders.*.institution", /(recommend|referee|reference|evaluator).*(institution|organi[sz]ation|employer|affiliation)/i, "high"],
-  ["recommenders.*.title", /(recommend|referee|reference|evaluator).*(title|position)/i, "high"],
-  ["recommenders.*.phone", /(recommend|referee|reference|evaluator).*(phone|mobile)/i, "high"],
+  ["recommenders.*.first_name", rx(`${REC}.*(first|given)|(first|given).*${REC}`), "high"],
+  ["recommenders.*.last_name", rx(`${REC}.*(last|family|sur)|(last|family).*${REC}`), "high"],
+  ["recommenders.*.email", rx(`${REC}.*e-?mail`), "high"],
+  ["recommenders.*.phone", rx(`${REC}.*(phone|mobile|telephone|contact (number|no))`), "high"],
+  ["recommenders.*.institution", rx(`${REC}.*(institution|organi[sz]ation|employer|affiliation|universit|company)`), "high"],
+  ["recommenders.*.title", rx(`${REC}.*(title|position|designation|rank)`), "high"],
   ["recommenders.*.relationship", /relationship/i, "high"],
-  ["recommenders.*.prefix", /^(recommender )?(prefix|salutation)$/i, "low"],
+  ["recommenders.*.prefix", rx(`^${REC}?\\w* ?(prefix|salutation|honorific)$`), "low"],
+  ["recommenders.*.address_line2", rx(`${REC}.*(address|street).*(\\b2\\b|line 2|two)`), "high"],
+  ["recommenders.*.address_line1", rx(`${REC}.*(address|street)`), "high"],
+  ["recommenders.*.city", rx(`${REC}.*(\\bcity\\b|\\btown\\b)`), "high"],
+  ["recommenders.*.state", rx(`${REC}.*(\\bstate\\b|province|region)`), "high"],
+  ["recommenders.*.postal_code", rx(`${REC}.*(postal|\\bzip\\b|pin ?code)`), "high"],
+  ["recommenders.*.country", rx(`${REC}.*country`), "high"],
+  ["recommenders.*.full_name", rx(`${REC}.*\\bname\\b`), "low"],
 
   ["tests.gre_verbal", /gre.*verbal/i, "high"],
   ["tests.gre_quant", /gre.*quant/i, "high"],
@@ -133,22 +153,31 @@ GF.RULES = [
   ["tests.duolingo_score", /duolingo.*score/i, "high"],
   ["tests.duolingo_date", /duolingo.*date/i, "high"],
 
-  ["employment.*.employer", /employer|company|organi[sz]ation name/i, "high"],
-  ["employment.*.title", /job title|\bposition\b|\brole\b/i, "high"],
+  ["employment.*.start_date", rx(`^${EMP}.*(start|from|begin)`), "high"],
+  ["employment.*.end_date", rx(`^${EMP}.*(\\bend\\b|\\bto\\b|until)`), "high"],
+  ["employment.*.city", rx(`^${EMP}.*(\\bcity\\b|\\btown\\b)`), "high"],
+  ["employment.*.country", rx(`^${EMP}.*country`), "high"],
+  ["employment.*.employer", /employer|company|organi[sz]ation( name)?$|^employment .*\bname\b/i, "high"],
+  ["employment.*.title", /job title|\bposition\b|\brole\b|designation|^employment .*\btitle\b/i, "high"],
 
-  ["education.*.institution", /institution|university|college|school name/i, "high"],
-  ["education.*.major", /major|field of study|discipline|concentration/i, "high"],
-  ["education.*.degree", /degree (earned|received|type|awarded)|^degree$/i, "low"],
+  ["education.*.start_date", rx(`^${EDU}.*(start|from|begin|entr(y|ance)|attended from)`), "high"],
+  ["education.*.end_date", rx(`^${EDU}.*(\\bend\\b|\\bto\\b|until|graduat|completion|conferr|award)`), "high"],
+  ["education.*.city", rx(`^${EDU}.*(\\bcity\\b|\\btown\\b)`), "high"],
+  ["education.*.country", rx(`^${EDU}.*country`), "high"],
+  ["education.*.institution", /institution|university|college|school name|name of (the )?school|^education .*\bname\b/i, "high"],
+  ["education.*.major", /major|field of study|discipline|concentration|specialization|branch/i, "high"],
+  ["education.*.degree", /degree (earned|received|type|awarded|name|title)|^(education )?degree$|qualification/i, "low"],
   ["education.*.gpa_scale", /gpa.*scale|grading scale|\bscale\b|out of|maximum (gpa|grade)/i, "high"],
-  ["education.*.gpa", /\bgpa\b|grade point|\bcgpa\b|cumulative average/i, "high"],
+  ["education.*.gpa", /\bgpa\b|grade point|\bcgpa\b|cumulative average|percentage|marks obtained/i, "high"],
 
   ["citizenship.passport_expiry", /passport.*(expir|valid)/i, "high"],
   ["citizenship.passport_number", /passport/i, "high"],
   ["personal.middle_name", /middle/i, "high"],
-  ["personal.preferred_name", /preferred|nick ?name|chosen name/i, "high"],
-  ["personal.former_names", /former|previous name|other names|maiden/i, "high"],
-  ["personal.first_name", /first name|given name|forename|^first$/i, "high"],
-  ["personal.last_name", /last name|family name|surname|^last$/i, "high"],
+  ["personal.preferred_name", /preferred|nick ?name|chosen name|known as/i, "high"],
+  ["personal.former_names", /former|previous name|other names|maiden|alias/i, "high"],
+  ["personal.first_name", /first name|given name|forename|^(\w+ )?first$/i, "high"],
+  ["personal.last_name", /last name|family name|surname|^(\w+ )?last$/i, "high"],
+  ["personal.full_name", /full (legal )?name|legal name|^(\w+ )?name$|^your name|name of (the )?(participant|applicant|student|candidate)|(participant|applicant|student|candidate)'?s? name/i, "low"],
   ["personal.date_of_birth", /birth ?date|date of birth|\bdob\b|^birthday/i, "high"],
   ["citizenship.city_of_birth", /city of birth|birth ?city|place of birth/i, "high"],
   ["citizenship.country_of_birth", /country of birth|birth ?country/i, "high"],
@@ -157,17 +186,21 @@ GF.RULES = [
 
   ["citizenship.us_permanent_resident", /permanent resident|green card/i, "high"],
   ["citizenship.us_citizen", /u\.?\s?s\.? citizen/i, "high"],
-  ["citizenship.country_of_citizenship", /citizenship|country of citizen/i, "low"],
+  ["citizenship.country_of_citizenship", /country of citizen|nationality|^citizenship (country|citizenship)( \(.*\))?$/i, "high"],
+  ["citizenship.country_of_citizenship", /citizenship/i, "low"],
   ["citizenship.visa_type", /visa type|type of visa/i, "low"],
   ["citizenship.visa_required", /visa/i, "low"],
 
   ["contact.alternate_email", /(alternate|secondary|other) e-?mail/i, "high"],
   ["contact.email", /e-?mail/i, "high"],
-  ["contact.phone", /phone|mobile|\bcell\b|telephone/i, "high"],
+  ["contact.phone", /phone|mobile|\bcell\b|telephone|contact (number|no)/i, "high"],
   // line 2 before line 1: "Street Address Line 2" also matches the line-1 pattern
   ["address.line2", /(address|street).*(\b2\b|line 2|two)|\bapt\b|suite/i, "high"],
-  ["address.line1", /(address|street).*(\b1\b|line 1|one)|^street|^address$/i, "high"],
+  ["address.line1", /(address|street).*(\b1\b|line 1|one)|^street|^(\w+ )?address$|(permanent|mailing|home|current|residential) address/i, "high"],
   ["address.postal_code", /postal|\bzip\b|pin ?code/i, "high"],
+  ["address.city", /^address .*(\bcity\b|\btown\b)/i, "high"],
+  ["address.state", /^address .*(\bstate\b|province|region)/i, "high"],
+  ["address.country", /^address .*country/i, "high"],
   ["address.city", /\bcity\b|\btown\b/i, "low"],
   ["address.state", /\bstate\b|province|region/i, "low"],
   ["address.country", /country/i, "low"],
@@ -176,6 +209,32 @@ GF.RULES = [
   ["*.start_date", /\b(start|from|begin)|attended from/i, "low"],
   ["*.end_date", /\b(end|until)\b|\bto\b|graduat|completion|conferr/i, "low"],
 ];
+
+// Section headings above fields: which part of your details they are about.
+GF.HEADINGS = [
+  ["recommenders", /recommend|referee|reference|evaluator|letter writer/i, "recommender"],
+  ["education", /education|academic (history|record|background)|institution|colleges?( attended)?$|universit(y|ies)( attended)?$|schools? attended|prior degree/i, "education"],
+  ["employment", /employment|work experience|professional experience|\bjob\b|employer/i, "employment"],
+  ["citizenship", /citizenship|nationality|immigration|visa/i, "citizenship"],
+  ["address", /address|contact information|mailing|residence/i, "address"],
+];
+
+// Country names forms often spell differently. A match through these counts as exact.
+GF.COUNTRY_ALIASES = [
+  ["United States", "USA", "US", "U.S.", "U.S.A.", "United States of America", "America"],
+  ["United Kingdom", "UK", "U.K.", "Great Britain", "Britain", "England"],
+  ["South Korea", "Korea, Republic of", "Republic of Korea", "Korea (South)", "Korea"],
+  ["Russia", "Russian Federation"], ["Germany", "Deutschland", "Federal Republic of Germany"],
+  ["China", "People's Republic of China", "PRC", "China (PRC)"], ["Vietnam", "Viet Nam"],
+  ["Iran", "Iran, Islamic Republic of"], ["Czech Republic", "Czechia"], ["Netherlands", "The Netherlands", "Holland"],
+  ["India", "Republic of India", "Bharat"], ["Taiwan", "Taiwan, Province of China", "Republic of China"],
+  ["Hong Kong", "Hong Kong SAR", "Hong Kong, China"], ["United Arab Emirates", "UAE"],
+];
+
+// Details that are built from others, offered when a form asks for a whole name at once.
+GF.DERIVED = {
+  full_name: { label: "Full name (first middle last)", from: ["first_name", "middle_name", "last_name"] },
+};
 
 // Upload fields: the panel tells you which document is wanted; you attach it yourself.
 GF.DOCS = [
@@ -188,7 +247,7 @@ GF.DOCS = [
 
 // Fields where a wrong value has legal or immigration consequences: always flagged.
 GF.ALWAYS_CHECK = new Set([
-  "personal.sex", "personal.date_of_birth", "citizenship.country_of_citizenship",
+  "personal.sex", "personal.date_of_birth", "personal.full_name", "citizenship.country_of_citizenship",
   "citizenship.visa_type", "citizenship.visa_required", "citizenship.us_citizen",
   "citizenship.us_permanent_resident", "citizenship.passport_number", "citizenship.passport_expiry",
 ]);
