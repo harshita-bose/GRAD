@@ -99,7 +99,8 @@ h1 {
   font: 400 var(--step-4)/1.02 var(--display); letter-spacing: -.02em; margin: 0 0 1.4rem;
   text-wrap: balance;
 }
-h1 em { font-style: italic; color: var(--accent-soft); }
+.tagline { font: 400 var(--step-2)/1.3 var(--display); color: var(--fg); margin: -.4rem 0 1.4rem; text-wrap: balance; max-width: 22em; }
+.tagline em { font-style: italic; color: var(--accent-soft); }
 .lede { font-size: var(--step-1); line-height: 1.55; color: var(--muted); max-width: 34em; margin: 0 0 2rem; }
 .lede strong { color: var(--fg); font-weight: 500; }
 .ctas { display: flex; flex-wrap: wrap; gap: .75rem; }
@@ -286,12 +287,14 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <div class="hero-grid">
         <div>
           <p class="eyebrow rise">B.Tech. Engineering Physics · Delhi Technological University</p>
-          <h1 class="rise d1">Harshita Bose builds <em>quantum devices</em> that steer single electrons and photons.</h1>
-          <p class="lede rise d2">I work on <strong>integrated quantum photonics</strong> and <strong>semiconductor quantum dots</strong>, from simulating waveguide bends in JCMwave to wire-bonding wafers in the cleanroom. Most recently at the Integrated Quantum Photonics Lab, Humboldt-Universität zu Berlin.</p>
+          <h1 class="rise d1">Harshita Bose</h1>
+          <p class="tagline rise d1">Integrated quantum photonics &amp; <em>semiconductor quantum devices</em></p>
+          <p class="lede rise d2">I simulate, design and fabricate devices that control single photons and electrons, from waveguide bends in JCMwave to wire-bonded quantum-dot chips. Most recently at the <strong>Integrated Quantum Photonics Lab, Humboldt-Universität zu Berlin</strong>.</p>
           <div class="ctas rise d3">
             <a class="btn primary" href="#publications">Read my publications</a>
-            <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">Download CV (PDF)</a>
+            <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
             <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
+            <a class="btn" href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">ORCID ↗</a>
           </div>
         </div>
         <figure class="figure portrait rise d2">
@@ -413,7 +416,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <header>
         <p class="kicker">Publications &amp; talks</p>
         <h2>Papers</h2>
-        <p>Journal submissions, conference presentations and proceedings.</p>
+        <p>Journal submissions, conference presentations and proceedings. ORCID <a href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">0009-0006-2827-0848</a>.</p>
       </header>
       <div class="body">
         <ol class="pubs">
@@ -550,6 +553,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
         <button class="btn" type="button" id="copy">Copy email</button>
         <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
         <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
+            <a class="btn" href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">ORCID ↗</a>
       </div>
     </div>
   </section>
