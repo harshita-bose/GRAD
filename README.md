@@ -111,3 +111,13 @@ pip install playwright==1.55.0
 node tests/test_labels.js         # how 40+ real-world question wordings are read
 python tests/test_extension.py   # loads the extension into Chromium and drives the practice portal
 ```
+
+## Portfolio site
+
+My research portfolio lives in `docs/portfolio/` and is published at
+https://harshita-bose.github.io/GRAD/portfolio/.
+
+To change it, edit `docs/portfolio/index.html` on the default branch (on github.com: open the
+file, click the pencil icon, commit). To replace the CV or photo, upload a new file with the same
+name (`Harshita_Bose_CV.pdf` or `harshita.jpg`) into `docs/portfolio/`. Every commit to the
+default branch redeploys the site within a minute or two; the **Actions** tab shows each deploy.
