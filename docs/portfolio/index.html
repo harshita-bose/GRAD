@@ -119,7 +119,21 @@ h1 em { font-style: italic; color: var(--accent-soft); }
   position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
   background:
     linear-gradient(var(--surface), var(--surface)) padding-box;
-  aspect-ratio: 4 / 3; max-width: 100%;
+  aspect-ratio: 5 / 1; max-width: 100%;
+}
+@media (max-width: 640px) { .chip-frame { aspect-ratio: 5 / 2; } }
+.strip { margin-top: clamp(2.5rem, 5vw, 3.5rem); }
+.portrait { justify-self: end; width: 100%; max-width: 26rem; }
+@media (max-width: 860px) { .portrait { justify-self: start; max-width: 22rem; } }
+.photo {
+  position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+  aspect-ratio: 4 / 5; max-width: 100%; background: var(--surface);
+}
+.photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.photo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(13,11,19,.45), rgba(13,11,19,0) 35%);
+  box-shadow: inset 0 0 0 1px rgba(196,178,255,.08);
 }
 .chip-frame canvas { display: block; width: 100%; height: 100%; }
 .figure figcaption {
@@ -276,15 +290,20 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
           <p class="lede rise d2">I work on <strong>integrated quantum photonics</strong> and <strong>semiconductor quantum dots</strong>, from simulating waveguide bends in JCMwave to wire-bonding wafers in the cleanroom. Most recently at the Integrated Quantum Photonics Lab, Humboldt-Universität zu Berlin.</p>
           <div class="ctas rise d3">
             <a class="btn primary" href="#publications">Read my publications</a>
+            <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">Download CV (PDF)</a>
             <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
-            <a class="btn" href="#contact">Get in touch</a>
           </div>
         </div>
-        <figure class="figure rise d2">
-          <div class="chip-frame"><canvas id="wg" aria-label="Animated illustration of a light pulse travelling through an S-bend waveguide on a photonic chip" role="img"></canvas></div>
-          <figcaption><span>S-bend waveguide · fundamental mode</span><span>HU Berlin, 2026</span></figcaption>
+        <figure class="figure portrait rise d2">
+          <div class="photo"><img src="harshita.jpg" width="800" height="1000" alt="Harshita Bose standing in front of the Berlin Cathedral"></div>
+          <figcaption><span>Berliner Dom, Berlin</span><span>Summer 2026 · HU Berlin internship</span></figcaption>
         </figure>
       </div>
+
+      <figure class="figure strip">
+        <div class="chip-frame"><canvas id="wg" aria-label="Animated illustration of light pulses travelling through an S-bend waveguide on a photonic chip" role="img"></canvas></div>
+        <figcaption><span>S-bend waveguide · fundamental mode, the kind of structure I designed at HU Berlin</span><span>|E|² at output</span></figcaption>
+      </figure>
 
       <div class="facts">
         <div class="fact"><b>9.44<small style="font-size:.55em;color:var(--faint)">/10</small></b><span>CGPA, B.Tech. 2023–27</span></div>
@@ -529,6 +548,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <div class="addr">
         <code id="email">harshitabose_23ep041@dtu.ac.in</code>
         <button class="btn" type="button" id="copy">Copy email</button>
+        <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
         <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
       </div>
     </div>
@@ -633,20 +653,21 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       }
     }
     // mode profile at the output facet
-    const y2 = H * 0.68, x0 = W - 14, amp = Math.min(46, W * 0.09);
+    const y2 = H * 0.68, x0 = W - 14, amp = Math.min(46, W * 0.06);
     ctx.beginPath();
-    for (let dy = -40; dy <= 40; dy += 1) {
-      const v = Math.exp(-(dy * dy) / (2 * 11 * 11));
+    const span = Math.min(40, H * 0.28), sig = span / 3.6;
+    for (let dy = -span; dy <= span; dy += 1) {
+      const v = Math.exp(-(dy * dy) / (2 * sig * sig));
       const px = x0 - v * amp, py = y2 + dy;
-      dy === -40 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      dy === -span ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.strokeStyle = 'rgba(196,178,255,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.fillStyle = 'rgba(164,157,183,0.75)';
     ctx.font = '500 10px "JetBrains Mono", ui-monospace, monospace';
     ctx.textAlign = 'right';
-    ctx.fillText('|E|²', x0 - amp - 6, y2 - 30);
+    ctx.fillText('|E|²', x0 - amp - 6, y2 - span * 0.6);
     ctx.textAlign = 'left';
-    ctx.fillText('in', 10, H * 0.32 - 18);
+    ctx.fillText('in', 10, H * 0.32 - 14);
     if (!reduce) requestAnimationFrame(frame);
   }
   build(); frame(0);
