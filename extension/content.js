@@ -8,6 +8,8 @@
     profile: null, tracker: null, appId: "", rows: [], unlocked: false, filledOnce: false,
     ctx: Object.fromEntries(GF.LIST_SECTIONS.map(s => [s, 0])),
     active: null, // list section that bare "start/end date" fields refer to
+    chosen: {}, // list sections whose entry you picked in the panel on this page
+    ours: new WeakMap(), // field → value GradFill typed there, so switching entries can replace it
     maps: {}, allMaps: {}, // fields you taught GradFill, per site: { host: { learnKey: profileKey | "-" } }
   };
 
@@ -55,7 +57,37 @@
   }
   const ORDINALS = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 };
   // Which part of your details the field's section is about, from the heading outline above it.
+  const classify = text => {
+    const hit = GF.HEADINGS.find(([, rx]) => rx.test(text));
+    if (!hit) return null;
+    const num = /\b(\d{1,2})\b/.exec(text) || /\b(first|second|third|fourth|fifth)\b/i.exec(text);
+    const index = num ? (Number(num[1]) || ORDINALS[num[1].toLowerCase()]) - 1 : null;
+    return { sec: hit[0], word: hit[2], index, heading: clean(text).slice(0, 60) };
+  };
+  // Pop-up windows ("Add Recommender") title their fields outside the form: read that title.
+  const DIALOG = "[role=dialog], [role=alertdialog], dialog, [aria-modal=true], .ui-dialog, .modal, .modal-dialog, .popup, .dialog, .lightbox";
+  const DIALOG_TITLE = ".ui-dialog-title, .modal-title, .dialog_title, .dialog-title, .popup-title, .modal-header, .dialog_header, h1, h2, h3, h4, legend";
+  function dialogTitle(box) {
+    const by = box.getAttribute("aria-labelledby");
+    if (by) return by.split(/\s+/).map(textOf).join(" ");
+    if (box.getAttribute("aria-label")) return box.getAttribute("aria-label");
+    const t = box.querySelector(DIALOG_TITLE);
+    return t ? t.innerText : "";
+  }
   function sectionOf(el, cache) {
+    for (let box = el.closest(DIALOG); box; box = box.parentElement && box.parentElement.closest(DIALOG)) {
+      const hit = classify(clean(dialogTitle(box)));
+      if (hit) return hit;
+    }
+    const fromHeadings = headingSection(el, cache);
+    if (fromHeadings) return fromHeadings;
+    // a whole form about recommenders, named so in its id, name, action or label
+    const form = el.closest("form");
+    const cue = form ? [form.id, form.name, form.getAttribute("action"), form.getAttribute("aria-label")].join(" ") : "";
+    if (/recommend|referee|reference|evaluator/i.test(cue)) return classify("recommender");
+    return null;
+  }
+  function headingSection(el, cache) {
     const scope = el.closest("form") || el.closest("main, [role=main]") || document.body;
     if (!cache.has(scope)) cache.set(scope, headingsFor(scope));
     const hs = cache.get(scope);
@@ -66,13 +98,8 @@
       const h = hs[i], lv = headingLevel(h);
       if (lv >= level) continue; // only walk up the outline: parent headings, not earlier siblings
       level = lv;
-      const text = clean(h.innerText);
-      const hit = GF.HEADINGS.find(([, rx]) => rx.test(text));
-      if (hit) {
-        const num = /\b(\d{1,2})\b/.exec(text) || /\b(first|second|third|fourth|fifth)\b/i.exec(text);
-        const index = num ? (Number(num[1]) || ORDINALS[num[1].toLowerCase()]) - 1 : null;
-        return { sec: hit[0], word: hit[2], index, heading: text };
-      }
+      const hit = classify(clean(h.innerText));
+      if (hit) return hit;
     }
     return null;
   }
@@ -316,7 +343,8 @@
     if (r.list && r.fromHeading) soft.push(`From ${title(r.list)} #${r.index + 1}, because of the heading “${f.section.heading}”`);
     else if (r.list) {
       const filled = (S.profile[r.list] || []).filter(e => Object.values(e).some(Boolean)).length;
-      if (filled > 1) notes.push(`Using ${title(r.list)} #${r.index + 1} — is that the right entry for this page?`);
+      if (S.chosen[r.list]) soft.push(`${title(r.list)} #${r.index + 1}, as you chose`);
+      else if (filled > 1) notes.push(`Which ${title(r.list).toLowerCase().replace(/s$/, "")}? Choose at the top of this panel (now showing #${r.index + 1})`);
     }
     if (/full_name$/.test(row.key)) soft.push("Full name built as first + middle + last — check the order this form wants");
     if (isDateKey(row.key)) {
@@ -362,11 +390,13 @@
       row.variants = variants;
     } else {
       if (f.maxlength && value.length > f.maxlength) notes.push(`${value.length} characters but the field allows ${f.maxlength} — it would be cut off`);
-      if (f.current && norm(f.current) !== norm(value)) notes.push(`Already contains "${f.current}" — will be replaced`);
+      const mine = S.ours.has(f.el) && norm(S.ours.get(f.el)) === norm(f.current);
+      if (f.current && !mine && norm(f.current) !== norm(value)) notes.push(`Already contains "${f.current}" — will be replaced`);
+      if (mine && norm(f.current) !== norm(value)) soft.push(`Replaces "${f.current}", which GradFill filled earlier`);
       if (f.current && norm(f.current) === norm(value)) soft.push("Already filled with this value");
     }
     const curOpt = f.tag === "select" && f.current ? f.options.find(o => o.value === f.current) : null;
-    if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current)
+    if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current && !S.ours.has(f.el))
       notes.push(`Currently "${f.options.find(o => o.value === f.current).text}" — will be changed`);
 
     Object.assign(row, { value, notes, soft, status: notes.length ? "flag" : soft.length ? "verify" : "ok" });
@@ -481,7 +511,7 @@
       const same = r.f.combo ? norm(actual).includes(norm(r.value)) : norm(actual) === norm(r.value);
       r.result = { actual, ok: !r.error && same };
       r.result.ok ? ok++ : bad++;
-      if (r.result.ok) r.approved = false; // done: don't offer to fill it again
+      if (r.result.ok) { r.approved = false; if (!r.f.group) S.ours.set(r.f.el, actual); } // done: don't offer it again
       mark(elOf(r), !r.result.ok ? COLORS.bad : r.status === "ok" ? COLORS.ok : COLORS.verify);
     }
     // fields waiting for your decision get a dashed outline so you can spot them on the page
@@ -562,6 +592,7 @@
     .card.flag { border-left-color: #e8a400; border-left-style: dashed; }
     .soft { font-size: 12px; margin: 4px 0 0; color: #5b6475; }
     .where { font-weight: 400; color: #5b6475; }
+    .bar label.pick { grid-template-columns: 1fr; font-weight: 600; background: #eef4ff; color: #1d2433; padding: 8px; border-radius: 8px; }
     .teach { margin-top: 6px; font-size: 12px; } .teach summary { cursor: pointer; color: #2a5bd7; }
     .teach select { margin-top: 4px; font-size: 13px; }
     .card.manual, .card.upload { border-left-color: #6b4fbb; } .card.none { border-left-color: #9aa3b2; }
@@ -611,12 +642,17 @@
     const lists = [...new Set(S.rows.map(r => r.list).filter(Boolean))];
     const needsActive = S.rows.some(r => r.key && r.key.startsWith("*"));
     for (const sec of GF.LIST_SECTIONS) {
-      if (!lists.includes(sec) && !needsActive) continue;
+      if (!lists.includes(sec) && !(needsActive && sec !== "recommenders")) continue;
+      // rows whose entry comes from a numbered heading ("Recommender 2") don't follow the picker
+      if (S.rows.filter(r => r.list === sec).every(r => r.f.section && r.f.section.sec === sec && r.f.section.index != null)) continue;
       const entries = S.profile[sec] || [];
-      const sel = h("select", { onchange: e => { S.ctx[sec] = Number(e.target.value); if (needsActive) S.active = sec; replan(); } },
-        entries.map((e, i) => h("option", { value: i, selected: i === S.ctx[sec] },
+      const undecided = !S.chosen[sec] && entries.filter(e => Object.values(e).some(Boolean)).length > 1;
+      const sel = h("select", { "aria-label": `Which ${title(sec).toLowerCase()} entry`, onchange: e => e.target.value !== "" && switchEntry(sec, Number(e.target.value)) },
+        undecided ? h("option", { value: "", selected: true }, "— choose —") : null,
+        entries.map((e, i) => h("option", { value: i, selected: !undecided && i === S.ctx[sec] },
           `#${i + 1} ${entryName(sec, e)}`)));
-      bar.append(h("label", {}, `${title(sec)} entry`, sel));
+      const ask = { recommenders: "Which recommender is this page for?", education: "Which degree is this page about?", employment: "Which job is this page about?" }[sec];
+      bar.append(h("label", { class: sec === "recommenders" ? "pick" : "" }, ask, sel));
     }
     if (needsActive) {
       const sel = h("select", { onchange: e => { S.active = e.target.value || null; replan(); } },
@@ -696,11 +732,30 @@
     if (S.unlocked) return h("div", { class: "guard" }, "Submit buttons are unlocked on this page. GradFill still will not click them — that is yours.");
     const inp = h("input", { type: "text", placeholder: `Type ${word} to unlock`, "aria-label": "Unlock submit" });
     return h("div", { class: "guard" },
-      "🔒 Submit / Pay / Certify buttons are blocked on this page while GradFill is open.",
+      "🔒 Submit / Pay / Certify / Send buttons are blocked on this page while GradFill is open.",
       h("div", { class: "row2" }, inp, h("button", { class: "act sec", onclick: () => {
         if (inp.value.trim() === word) { S.unlocked = true; render(h("div", { class: "msg" }, "Unlocked for this page only.")); }
         else inp.value = "";
       } }, "Unlock")));
+  }
+
+  // Picking another recommender / degree / job: re-read the page and fill that entry instead.
+  async function switchEntry(sec, i) {
+    S.ctx[sec] = i;
+    S.chosen[sec] = true;
+    S.rows.forEach(r => mark(elOf(r), ""));
+    plan();
+    // the new entry has nothing for a box GradFill filled from the old one: empty it, never leave the old person's value
+    for (const r of S.rows) {
+      const el = r.f.el;
+      if (r.list !== sec || FILLABLE.has(r.status) || r.f.group || !S.ours.has(el)) continue;
+      if (norm(S.ours.get(el)) !== norm(readBack(r))) continue; // you changed it yourself: leave it
+      if (el.tagName === "SELECT") { const blank = [...el.options].find(o => GF.isPlaceholder(o.text)); el.value = blank ? blank.value : ""; fire(el, "input", "change"); }
+      else { setNative(el, ""); fire(el, "input", "change"); }
+      S.ours.delete(el);
+      r.soft.push(`Emptied: ${title(sec)} #${i + 1} has nothing saved for this`);
+    }
+    if (S.autoFill) await doFill(); else render();
   }
 
   function replan() {

@@ -105,11 +105,12 @@ GF.MANUAL = [
   [/sexual orientation|gender identity|transgender/i, "voluntary demographic"],
   [/criminal|convicted|felony|misdemeanou?r|disciplin|expelled|suspended|probation/i, "conduct / legal history"],
   [/signature|\bsign\b|certif|attest|i agree|i affirm|i understand|acknowledg|consent|terms (and|of)|privacy policy/i, "agreement / certification"],
+  [/waive (my|the|your)? ?right|right to (view|access|see)|ferpa/i, "waiving your right to see the letter (your decision)"],
   [/\bfees?\b|payment|credit card|card number|cvv|waiver/i, "payment / fee waiver"],
 ];
 
 // Buttons blocked by the guard on pages where the panel is open.
-GF.SUBMIT_LIKE = /submit|\bpay\b|payment|certify|finali[sz]e|sign and/i;
+GF.SUBMIT_LIKE = /submit|\bpay\b|payment|certify|finali[sz]e|sign and|\bsend\b|\binvite\b/i;
 
 // [profile key, label pattern, confidence]. First match wins, so specific rules go first.
 // Patterns are tested against "<section> <label>", where <section> comes from the heading above the

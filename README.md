@@ -65,7 +65,7 @@ program page"** until you tick *confirmed* in Edit. Tick items off straight from
 Prefer to approve everything before anything is typed? In GradFill settings, turn off
 **"Fill the fields GradFill is sure about straight away"**.
 
-**Submit / Pay / Certify buttons are blocked** on any page where GradFill is open. To submit, type the
+**Submit / Pay / Certify / Send buttons are blocked** on any page where GradFill is open. To submit, type the
 school's name in the unlock box at the bottom of the panel, then click Submit yourself.
 
 ## Try it safely first
@@ -76,6 +76,7 @@ there is sent anywhere:
 - https://harshita-bose.github.io/GRAD/practice/register-b.html (built like the UC Berkeley registration page: dropdowns labelled only Month / Day / Year)
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
 - https://harshita-bose.github.io/GRAD/practice/tricky.html (different wordings, other formats, type-to-search dropdowns)
+- https://harshita-bose.github.io/GRAD/practice/recommender.html (built like Princeton's "Add Recommender" pop-up)
 
 ## How GradFill reads a question
 
@@ -94,6 +95,9 @@ there is sent anywhere:
   matches. If two options are equally close, GradFill asks instead.
 - **Filled automatically only when the evidence is strong:** a clear label, the page's autofill
   hint, or two clues that agree. Anything else waits for your tick.
+- **Recommender pages and pop-ups** ("Add Recommender") are recognised from their title. The panel
+  asks **"Which recommender is this page for?"**. Pick one and GradFill fills that person's details.
+  Pick another and it replaces them, emptying any box the new person has nothing saved for.
 - **Never filled with your details:** questions about someone else (emergency contact, parent,
   guardian, spouse, sponsor).
 - **Still wrong somewhere?** Use **"Wrong detail? Choose which of your details goes here"** on that

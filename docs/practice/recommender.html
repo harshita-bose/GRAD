@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Recommenders</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .ui-dialog { background: var(--card); color: var(--ink); width: min(640px, 100%); border-radius: 6px; }
+  .ui-dialog-titlebar { background: var(--chip); padding: 10px 14px; font-weight: 700; }
+  .ui-dialog-content { padding: 14px; }
+  table.plain td { padding: 4px 8px; vertical-align: top; } table.plain td:first-child { width: 130px; }
+  table.plain input:not([type=radio]) { width: 280px; max-width: 100%; } table.plain select { width: auto; }
+  .bar { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main>
+  <h2>Recommendations</h2>
+  <p>Built like Princeton's “Add Recommender” pop-up: the title is outside the form and is not a heading.</p>
+</main>
+<div class="overlay">
+  <div class="ui-dialog" role="dialog" aria-labelledby="dlg-title">
+    <div class="ui-dialog-titlebar"><span id="dlg-title" class="ui-dialog-title">Add Recommender</span></div>
+    <form class="ui-dialog-content" onsubmit="event.preventDefault(); document.body.dataset.sent='yes';">
+      <table class="plain"><tbody>
+        <tr><td>Type</td><td><label><input type="radio" name="type" value="a" checked> Academic</label><br><label><input type="radio" name="type" value="n"> Non-Academic</label></td></tr>
+        <tr><td><label for="prefix">Prefix</label></td><td><select id="prefix"><option value=""></option><option>Dr.</option><option>Mr.</option><option>Mrs.</option><option>Ms.</option><option>Prof.</option></select></td></tr>
+        <tr><td><label for="rf">First Name</label></td><td><input id="rf"></td></tr>
+        <tr><td><label for="rl">Last Name</label></td><td><input id="rl"></td></tr>
+        <tr><td><label for="org">Organization</label></td><td><input id="org"></td></tr>
+        <tr><td><label for="pos">Position/Title</label></td><td><input id="pos"></td></tr>
+        <tr><td><label for="rel">Relationship</label></td><td><input id="rel"></td></tr>
+        <tr><td><label for="tel">Telephone</label></td><td><input id="tel"></td></tr>
+        <tr><td><label for="em">Email</label></td><td><input id="em"></td></tr>
+      </tbody></table>
+      <p>Your name will be displayed to recommender as: <b>Test Applicant</b></p>
+      <fieldset><legend>Do you waive your right to view the recommendation?</legend>
+        <label><input type="radio" name="waive" value="y"> I waive my right to access this report.</label><br>
+        <label><input type="radio" name="waive" value="n"> I do not waive my right to access this report.</label></fieldset>
+      <div class="bar"><button type="submit" class="primary">Send To Recommender</button><button type="button">Cancel</button></div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

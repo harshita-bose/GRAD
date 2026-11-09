@@ -26,7 +26,8 @@ PROFILE = {
     "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics", "degree": "B.Tech",
                    "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"}, {}, {}],
     "employment": [{}, {}, {}],
-    "recommenders": [{"first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in"},
+    "recommenders": [{"prefix": "Dr.", "first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in", "title": "Professor",
+                      "institution": "Delhi Technological University", "phone": "+91 98991 30814", "relationship": "Thesis supervisor"},
                      {"first_name": "Tim", "last_name": "Schroeder", "title": "Professor",
                       "institution": "Humboldt University of Berlin", "city": "Berlin", "country": "Germany",
                       "postal_code": "10117"}, {}, {}],
@@ -197,6 +198,29 @@ def main():
         assert page.get_attribute("#res", "data-chosen") == "India"  # picked from the list, not just typed
         assert panel(page).locator(".res.bad").count() == 0, panel(page).locator(".res.bad").all_inner_texts()
 
+        # --- a recommender pop-up (like Princeton's): never the applicant's name; you choose the recommender
+        page.goto(base + "/practice/recommender.html")
+        open_gradfill(sw)
+        expect(panel(page)).to_be_visible()
+        picker = panel(page).locator("label.pick select")
+        expect(picker).to_have_value("")  # two recommenders saved: GradFill asks which one
+        assert page.input_value("#rf") == "" and page.input_value("#rl") == ""  # never "Test" / "Applicant"
+        assert "manual" in card(page, "waive your right").get_attribute("class")
+        picker.select_option("0")
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
+        assert got == {"prefix": "Dr.", "rf": "Asha", "rl": "Rao", "org": "Delhi Technological University", "pos": "Professor",
+                       "rel": "Thesis supervisor", "tel": "+91 98991 30814", "em": "asha@dtu.ac.in"}, got
+        if os.environ.get("GF_SHOTS"):
+            page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "recommender.png"))
+        panel(page).locator("label.pick select").select_option("1")  # switch to recommender #2
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
+        assert got == {"prefix": "", "rf": "Tim", "rl": "Schroeder", "org": "Humboldt University of Berlin", "pos": "Professor",
+                       "rel": "", "tel": "", "em": ""}, got  # nothing of Asha's left behind
+        page.click("text=Send To Recommender")
+        assert page.evaluate("document.body.dataset.sent") is None, "Send was not blocked"
+
         # --- application page
         page.goto(base + "/practice/apply.html")
         open_gradfill(sw)
@@ -265,7 +289,7 @@ def main():
 
         # activity logged to the tracker (the app is linked by the portal's hostname)
         acts = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[0]")
-        assert acts["status"] == "In progress" and len(acts["activity"]) == 6, acts
+        assert acts["status"] == "In progress" and len(acts["activity"]) == 8, acts
         page.goto(base + "/index.html")
         expect(page.locator(".app .last")).to_contain_text("Filled")
         if os.environ.get("GF_SHOTS"):
