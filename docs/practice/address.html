@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Address</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .ui-dialog { background: var(--card); color: var(--ink); width: min(640px, 100%); border-radius: 6px; }
+  .ui-dialog-titlebar { background: var(--chip); padding: 10px 14px; font-weight: 700; }
+  .ui-dialog-content { padding: 14px; }
+  table.plain td { padding: 4px 8px; vertical-align: top; } table.plain td:first-child { width: 130px; }
+  table.plain input:not([type=radio]), table.plain textarea { width: 340px; max-width: 100%; } table.plain select { width: auto; }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main><h2>Addresses</h2><p>Built like a Slate “Add Address” pop-up: Country starts as United States, Street is one box, Region loads after Country.</p></main>
+<div class="overlay">
+  <div class="ui-dialog" role="dialog" aria-labelledby="addr-title">
+    <div class="ui-dialog-titlebar"><span id="addr-title" class="ui-dialog-title">Add Address</span></div>
+    <form class="ui-dialog-content" onsubmit="event.preventDefault()">
+      <table class="plain"><tbody>
+        <tr><td>Type</td><td><label><input type="radio" name="t" value="m"> Mailing Address</label><br><label><input type="radio" name="t" value="p" checked> Permanent Address</label></td></tr>
+        <tr><td><label for="country">Country</label></td><td><select id="country">
+          <option value=""></option><option value="DE">Germany</option><option value="IN">India</option><option value="NP">Nepal</option><option value="US" selected>United States</option></select></td></tr>
+        <tr><td><label for="street">Street</label></td><td><textarea id="street" rows="3"></textarea></td></tr>
+        <tr><td><label for="city">City</label></td><td><input id="city"></td></tr>
+        <tr><td><label for="region">Region</label></td><td><select id="region"></select></td></tr>
+        <tr><td><label for="postal">Postal Code</label></td><td><input id="postal"></td></tr>
+      </tbody></table>
+      <p><button type="button" class="button">Save</button> <button type="button">Cancel</button></p>
+    </form>
+  </div>
+</div>
+<script>
+  // Region's choices depend on Country and arrive a moment later, like a portal fetching them.
+  const REGIONS = { US: ["California", "Illinois", "New York"], IN: ["Delhi", "Karnataka", "Maharashtra", "Tamil Nadu"], DE: ["Berlin", "Bavaria"], NP: ["Bagmati"] };
+  const country = document.getElementById("country"), region = document.getElementById("region");
+  function load() {
+    region.replaceChildren(new Option("Select Region", ""));
+    setTimeout(() => (REGIONS[country.value] || []).forEach(r => region.append(new Option(r, r))), 300);
+  }
+  country.addEventListener("change", load);
+  load();
+</script>
+</body>
+</html>

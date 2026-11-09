@@ -171,7 +171,11 @@
           if (row) f.label = `${row} › ${f.label}`;
         }
         f.current = isDivCombo ? clean(el.innerText) : el.value;
-        if (f.tag === "select") f.options = [...el.options].map(o => ({ text: clean(o.text), value: o.value }));
+        if (f.tag === "select") {
+          f.options = [...el.options].map(o => ({ text: clean(o.text), value: o.value }));
+          const preset = [...el.options].find(o => o.defaultSelected) || el.options[0];
+          f.preset = preset ? preset.value : "";  // what the page itself pre-selected
+        }
         else if (el.list) { f.options = [...el.list.options].map(o => ({ text: clean(o.label || o.value), value: o.value })); f.datalist = true; }
         else if (isDivCombo || el.getAttribute("role") === "combobox" || /^(list|both)$/.test(el.getAttribute("aria-autocomplete") || "")) f.combo = true;
       }
@@ -396,17 +400,38 @@
       if (f.current && norm(f.current) === norm(value)) soft.push("Already filled with this value");
     }
     const curOpt = f.tag === "select" && f.current ? f.options.find(o => o.value === f.current) : null;
-    if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current && !S.ours.has(f.el))
-      notes.push(`Currently "${f.options.find(o => o.value === f.current).text}" — will be changed`);
+    if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current && !S.ours.has(f.el)) {
+      // the page's own preset (e.g. "United States") may be replaced; something you picked may not
+      if (f.current === f.preset) soft.push(`Replaces the page's preset "${curOpt.text}"`);
+      else notes.push(`Currently "${curOpt.text}" — will be changed`);
+    }
 
     Object.assign(row, { value, notes, soft, status: notes.length ? "flag" : soft.length ? "verify" : "ok" });
     row.approved = row.status !== "flag";
+    // GradFill already filled this box with this value and you haven't changed it: nothing to do again
+    const shown = f.tag === "select" ? (curOpt ? curOpt.text : "") : f.current;
+    if (S.ours.has(f.el) && norm(S.ours.get(f.el)) === norm(shown) && norm(shown) === norm(value)) {
+      row.approved = false;
+      row.result = { actual: shown, ok: true };
+      row.soft = row.soft.filter(n => n !== "Already filled with this value");
+    }
     return row;
   }
 
   function plan() {
     S.rows = scan().map(planField);
     S.rows.forEach((r, i) => (r.n = i + 1));
+    // a single "Street" box and no line-2 box on the page: both address lines go in that one box
+    for (const r of S.rows) {
+      const m = /^(address\.|recommenders\.\d+\.address_)line1$/.exec(r.key || "");
+      if (!m || !FILLABLE.has(r.status) || S.rows.some(x => x.key === r.key.replace(/line1$/, "line2"))) continue;
+      const src = r.key.startsWith("address.") ? S.profile.address : S.profile.recommenders[Number(r.key.split(".")[1])];
+      const second = r.key.startsWith("address.") ? src.line2 : src.address_line2;
+      if (!second) continue;
+      r.value = r.f.tag === "textarea" ? `${r.value}\n${second}` : `${r.value}, ${second}`;
+      r.soft.push(r.f.tag === "textarea" ? "Both address lines, one per line" : "Both address lines, joined with a comma");
+      if (r.status === "ok") r.status = "verify";
+    }
   }
 
   // ---------- fill & verify ----------
@@ -502,8 +527,34 @@
     target.style.outlineOffset = color ? "2px" : "";
   }
 
+  // Signature of what can be answered: changes when questions appear or a dropdown's options load.
+  const shape = () => S.rows.map(r => `${r.f.gid}:${(r.f.options || []).length}:${r.status}`).join("|");
   async function fillApproved() {
-    const todo = S.rows.filter(r => r.approved && FILLABLE.has(r.status) && r.value !== "");
+    let ok = 0, bad = 0;
+    const done = new Map(); // field element → its row, across passes
+    for (let pass = 0; pass < 3; pass++) {
+      const todo = S.rows.filter(r => r.approved && FILLABLE.has(r.status) && r.value !== "" && !done.has(r.f.el));
+      if (!todo.length) break;
+      const counts = await fillRows(todo);
+      ok += counts.ok; bad += counts.bad;
+      await logActivity(counts.ok, counts.bad); // right away: you may move on before the next round
+      todo.forEach(r => done.set(r.f.el, r));
+      if (!S.autoFill) break; // review-first mode: never fill a question you have not seen
+      // answering e.g. Country can load Region's options or reveal new questions: re-read and go again
+      const before = shape();
+      await sleep(700);
+      plan();
+      S.rows = S.rows.map(r => (done.has(r.f.el) ? Object.assign(done.get(r.f.el), { n: r.n }) : r));
+      if (shape() === before) break;
+    }
+    // fields waiting for your decision get a dashed outline so you can spot them on the page
+    for (const r of S.rows) if (r.status === "flag" && !r.result) mark(elOf(r), COLORS.flag, true);
+    S.filledOnce = true;
+    const newFields = scan().length - S.rows.length;
+    return { ok, bad, newFields: Math.max(0, newFields) };
+  }
+
+  async function fillRows(todo) {
     let ok = 0, bad = 0;
     for (const r of todo) {
       r.error = await fillRow(r);
@@ -514,12 +565,7 @@
       if (r.result.ok) { r.approved = false; if (!r.f.group) S.ours.set(r.f.el, actual); } // done: don't offer it again
       mark(elOf(r), !r.result.ok ? COLORS.bad : r.status === "ok" ? COLORS.ok : COLORS.verify);
     }
-    // fields waiting for your decision get a dashed outline so you can spot them on the page
-    for (const r of S.rows) if (r.status === "flag" && !r.result) mark(elOf(r), COLORS.flag, true);
-    S.filledOnce = true;
-    const newFields = scan().length - S.rows.length;
-    await logActivity(ok, bad);
-    return { ok, bad, newFields: Math.max(0, newFields) };
+    return { ok, bad };
   }
 
   // ---------- tracker ----------
@@ -640,7 +686,7 @@
       bar.append(h("div", { class: "msg warn" }, `This site (${location.hostname}) isn't linked to ${chosen.school} yet. `,
         h("button", { class: "act sec", onclick: linkSite }, "Link this site")));
     const lists = [...new Set(S.rows.map(r => r.list).filter(Boolean))];
-    const needsActive = S.rows.some(r => r.key && r.key.startsWith("*"));
+    const needsActive = S.rows.some(r => r.key && r.key.startsWith("*") && r.notes.some(n => n.startsWith("Date field")));
     for (const sec of GF.LIST_SECTIONS) {
       if (!lists.includes(sec) && !(needsActive && sec !== "recommenders")) continue;
       // rows whose entry comes from a numbered heading ("Recommender 2") don't follow the picker

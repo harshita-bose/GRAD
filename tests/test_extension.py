@@ -21,7 +21,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROFILE = {
     "personal": {"first_name": "Test", "last_name": "Applicant", "middle_name": "", "date_of_birth": "2003-05-17"},
     "contact": {"email": "test@example.com", "phone": "+91 9800000000"},
-    "address": {"line1": "1 Main Rd", "line2": "", "city": "Delhi", "postal_code": "110042", "country": "India"},
+    "address": {"line1": "1 Main Rd", "line2": "", "city": "Delhi", "state": "Delhi", "postal_code": "110042", "country": "India"},
     "citizenship": {"country_of_citizenship": "India", "us_citizen": "No"},
     "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics", "degree": "B.Tech",
                    "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"}, {}, {}],
@@ -198,6 +198,19 @@ def main():
         assert page.get_attribute("#res", "data-chosen") == "India"  # picked from the list, not just typed
         assert panel(page).locator(".res.bad").count() == 0, panel(page).locator(".res.bad").all_inner_texts()
 
+        # --- an "Add Address" pop-up: preset country, one Street box, Region that loads after Country
+        sw.evaluate("""async () => { const { profile } = await chrome.storage.local.get('profile');
+            profile.address.line2 = 'IIT Delhi'; await chrome.storage.local.set({ profile }); }""")
+        page.goto(base + "/practice/address.html")
+        open_gradfill(sw)
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 5 field(s)")
+        got = {k: page.input_value(f"#{k}") for k in ["country", "street", "city", "region", "postal"]}
+        assert got == {"country": "IN", "street": "1 Main Rd\nIIT Delhi", "city": "Delhi", "region": "Delhi",
+                       "postal": "110042"}, got
+        assert "preset" in card(page, "Country").inner_text()
+        sw.evaluate("""async () => { const { profile } = await chrome.storage.local.get('profile');
+            profile.address.line2 = ''; await chrome.storage.local.set({ profile }); }""")
+
         # --- a recommender pop-up (like Princeton's): never the applicant's name; you choose the recommender
         page.goto(base + "/practice/recommender.html")
         open_gradfill(sw)
@@ -207,14 +220,14 @@ def main():
         assert page.input_value("#rf") == "" and page.input_value("#rl") == ""  # never "Test" / "Applicant"
         assert "manual" in card(page, "waive your right").get_attribute("class")
         picker.select_option("0")
-        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 8 field(s)")
         got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
         assert got == {"prefix": "Dr.", "rf": "Asha", "rl": "Rao", "org": "Delhi Technological University", "pos": "Professor",
                        "rel": "Thesis supervisor", "tel": "+91 98991 30814", "em": "asha@dtu.ac.in"}, got
         if os.environ.get("GF_SHOTS"):
             page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "recommender.png"))
         panel(page).locator("label.pick select").select_option("1")  # switch to recommender #2
-        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 3 field(s)")  # "Professor" stays as is
         got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
         assert got == {"prefix": "", "rf": "Tim", "rl": "Schroeder", "org": "Humboldt University of Berlin", "pos": "Professor",
                        "rel": "", "tel": "", "em": ""}, got  # nothing of Asha's left behind
@@ -289,7 +302,11 @@ def main():
 
         # activity logged to the tracker (the app is linked by the portal's hostname)
         acts = sw.evaluate("async () => (await chrome.storage.local.get('tracker')).tracker.applications[0]")
-        assert acts["status"] == "In progress" and len(acts["activity"]) == 8, acts
+        assert acts["status"] == "In progress", acts
+        logged = [a["text"] for a in acts["activity"]]
+        for title in ["Register", "Register B", "Tricky Form", "Address", "Recommenders", "Application"]:
+            assert any(f"“Practice Portal {title}”" in t for t in logged), (title, logged)
+        assert not any(t.startswith("Filled 19") for t in logged[:1]), logged  # the ticked fill didn't redo earlier fields
         page.goto(base + "/index.html")
         expect(page.locator(".app .last")).to_contain_text("Filled")
         if os.environ.get("GF_SHOTS"):

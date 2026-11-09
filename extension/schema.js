@@ -198,7 +198,7 @@ GF.RULES = [
   ["contact.phone", /phone|mobile|\bcell\b|telephone|contact (number|no)|whats ?app|country ?code|dial(ing)? code|calling code|\bisd\b/i, "high"],
   // line 2 before line 1: "Street Address Line 2" also matches the line-1 pattern
   ["address.line2", /(address|street).*(\b2\b|line 2|two)|\bapt\b|suite/i, "high"],
-  ["address.line1", /(address|street).*(\b1\b|line 1|one)|^street|^(\w+ )?address$|(permanent|mailing|home|current|residential) address/i, "high"],
+  ["address.line1", /(address|street).*(\b1\b|line 1|one)|^street|^(\w+ )?street( address)?$|^(\w+ )?address$|(permanent|mailing|home|current|residential) address/i, "high"],
   ["address.postal_code", /postal|\bzip\b|pin ?code/i, "high"],
   ["address.city", /^address .*(\bcity\b|\btown\b)|(current|home|residential) city/i, "high"],
   ["address.state", /^address .*(\bstate\b|province|region)/i, "high"],
@@ -208,8 +208,8 @@ GF.RULES = [
   ["address.country", /country/i, "low"],
 
   // Bare dates only make sense for the list entry chosen in the panel.
-  ["*.start_date", /\b(start|from|begin)|attended from/i, "low"],
-  ["*.end_date", /\b(end|until)\b|\bto\b|graduat|completion|conferr/i, "low"],
+  ["*.start_date", /\b(start|begin|from)\b.*\bdate\b|\bdate\b.*\b(start|began|from)\b|attended from|^(dates? )?from$/i, "low"],
+  ["*.end_date", /\b(end|until|to)\b.*\bdate\b|\bdate\b.*\b(end|ended|to|until)\b|graduation date|date of graduation|completion date|date (conferred|awarded)|attended to|^(dates? )?to$/i, "low"],
 ];
 
 // Questions about someone else: never answered with your details.

@@ -77,6 +77,7 @@ there is sent anywhere:
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
 - https://harshita-bose.github.io/GRAD/practice/tricky.html (different wordings, other formats, type-to-search dropdowns)
 - https://harshita-bose.github.io/GRAD/practice/recommender.html (built like Princeton's "Add Recommender" pop-up)
+- https://harshita-bose.github.io/GRAD/practice/address.html (an "Add Address" pop-up: preset country, one Street box, Region that loads after Country)
 
 ## How GradFill reads a question
 
@@ -91,6 +92,10 @@ there is sent anywhere:
   - **Yes/No:** Y/N.
   - **Female/Male:** F/M.
   - **Degree names:** "B.Tech" → "Bachelor's degree".
+- **Questions that depend on earlier answers** (Region after Country, extra questions that appear)
+  are filled in follow-up rounds right after, when "fill straight away" is on. A dropdown still on the
+  page's own preset (e.g. "United States") is replaced; a choice you made is never overwritten without asking.
+- **One "Street" box** gets both address lines (one per line) when the form has no separate line-2 box.
 - **Dropdowns, including type-to-search boxes,** are picked automatically when one option clearly
   matches. If two options are equally close, GradFill asks instead.
 - **Filled automatically only when the evidence is strong:** a clear label, the page's autofill
