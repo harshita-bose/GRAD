@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harshita Bose</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Harshita Bose — Engineering Physics at Delhi Technological University. Research in integrated quantum photonics, quantum dots and semiconductor quantum devices.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Schibsted+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column on a dark photonic-chip ground; a sticky index bar,
+   a hero with a live S-bend waveguide, then dated ledgers for research, papers and honours. */
+:root {
+  color-scheme: dark;
+  --bg: #0d0b13;          /* substrate: near-black biased to violet */
+  --surface: #15121e;     /* raised panels */
+  --line: #2a2539;        /* hairlines, waveguide cladding */
+  --fg: #ece8f4;          /* primary text */
+  --muted: #a49db7;       /* secondary text */
+  --faint: #6f6884;       /* captions, dates */
+  --accent: #9d7cf4;      /* professional purple */
+  --accent-soft: #c4b2ff; /* links, highlights on dark */
+  --accent-wash: rgba(157,124,244,.12);
+  --ok: #7fd1a8;          /* "published" state */
+  --warn: #e7c37a;        /* "submitted / in preparation" state */
+
+  --display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --body: "Schibsted Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --step--1: .82rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.6rem;
+  --step-3: 2.2rem;
+  --step-4: clamp(2.6rem, 6.5vw, 4.4rem);
+  --col: 68rem;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 var(--step-0)/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 30; background: var(--bg);
+}
+a { color: var(--accent-soft); text-decoration-color: rgba(196,178,255,.35); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--accent-soft); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+::selection { background: var(--accent); color: var(--bg); }
+
+.wrap {
+  max-width: var(--col);
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 720px) {
+  .wrap { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+}
+
+/* ---------- top bar ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: rgba(13,11,19,.86);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.bar .wrap { display: flex; align-items: center; gap: 1.5rem; padding-block: .8rem; }
+.mark { font: 500 var(--step-1)/1 var(--display); color: var(--fg); text-decoration: none; white-space: nowrap; }
+.mark span { color: var(--accent); }
+.bar nav { display: flex; gap: 1.25rem; margin-left: auto; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.bar nav::-webkit-scrollbar { display: none; }
+.bar nav a {
+  font: 500 var(--step--1)/1 var(--body); letter-spacing: .02em;
+  color: var(--muted); text-decoration: none; white-space: nowrap; padding-block: .3rem;
+  border-bottom: 1px solid transparent;
+}
+.bar nav a:hover, .bar nav a.on { color: var(--fg); border-bottom-color: var(--accent); }
+@media (max-width: 560px) { .mark { display: none; } .bar nav { margin-left: 0; } }
+
+/* ---------- hero ---------- */
+.hero { padding-block: clamp(3rem, 8vw, 6rem) clamp(2.5rem, 6vw, 4.5rem); border-bottom: 1px solid var(--line); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: center; }
+@media (max-width: 860px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
+.eyebrow {
+  font: 500 var(--step--1)/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-soft); margin: 0 0 1.2rem;
+}
+h1 {
+  font: 400 var(--step-4)/1.02 var(--display); letter-spacing: -.02em; margin: 0 0 1.4rem;
+  text-wrap: balance;
+}
+.tagline { font: 400 var(--step-2)/1.3 var(--display); color: var(--fg); margin: -.4rem 0 1.4rem; text-wrap: balance; max-width: 22em; }
+.tagline em { font-style: italic; color: var(--accent-soft); }
+.lede { font-size: var(--step-1); line-height: 1.55; color: var(--muted); max-width: 34em; margin: 0 0 2rem; }
+.lede strong { color: var(--fg); font-weight: 500; }
+.ctas { display: flex; flex-wrap: wrap; gap: .75rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font: 500 .95rem/1 var(--body); text-decoration: none;
+  padding: .8rem 1.1rem; border-radius: 6px; border: 1px solid var(--line);
+  color: var(--fg); background: transparent; cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.btn:hover { border-color: var(--accent); background: var(--accent-wash); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #120d20; }
+.btn.primary:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+
+.figure { margin: 0; min-width: 0; }
+.chip-frame {
+  position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box;
+  aspect-ratio: 5 / 1; max-width: 100%;
+}
+@media (max-width: 640px) { .chip-frame { aspect-ratio: 5 / 2; } }
+.strip { margin-top: clamp(2.5rem, 5vw, 3.5rem); }
+.portrait { justify-self: end; width: 100%; max-width: 26rem; }
+@media (max-width: 860px) { .portrait { justify-self: start; max-width: 22rem; } }
+.photo {
+  position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+  aspect-ratio: 4 / 5; max-width: 100%; background: var(--surface);
+}
+.photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.photo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(13,11,19,.45), rgba(13,11,19,0) 35%);
+  box-shadow: inset 0 0 0 1px rgba(196,178,255,.08);
+}
+.chip-frame canvas { display: block; width: 100%; height: 100%; }
+.figure figcaption {
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  font: 400 .75rem/1.4 var(--mono); color: var(--faint); margin-top: .7rem;
+}
+
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: clamp(2.5rem, 5vw, 3.5rem); border-top: 1px solid var(--line); }
+.fact { padding: 1.1rem 1rem 0 0; }
+.fact + .fact { padding-left: 1rem; border-left: 1px solid var(--line); }
+.fact b { display: block; font: 400 var(--step-2)/1.1 var(--display); color: var(--fg); font-variant-numeric: tabular-nums; }
+.fact span { font-size: var(--step--1); color: var(--muted); }
+@media (max-width: 640px) {
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fact:nth-child(3) { padding-left: 0; border-left: 0; }
+  .fact:nth-child(n+3) { margin-top: .5rem; }
+}
+
+/* ---------- sections ---------- */
+section.block { padding-block: clamp(3rem, 7vw, 5rem); border-bottom: 1px solid var(--line); }
+.head { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2rem; }
+@media (max-width: 860px) { .head { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } }
+.head > header { min-width: 0; }
+.kicker { font: 500 .72rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 .6rem; }
+h2 { font: 400 var(--step-3)/1.1 var(--display); margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+.head > header p { color: var(--muted); font-size: .92rem; margin: .8rem 0 0; max-width: 22em; }
+.body { min-width: 0; }
+
+/* interests */
+.interests { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.interest { background: var(--bg); padding: 1.3rem 1.25rem 1.4rem; transition: background .2s; }
+.interest:hover { background: var(--surface); }
+.interest .sym { font: 400 .78rem/1 var(--mono); color: var(--accent-soft); margin-bottom: .9rem; display: block; }
+.interest h3 { font: 500 1.02rem/1.3 var(--body); margin: 0 0 .35rem; }
+.interest p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+/* timeline */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.entry { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 1.5rem; padding-block: 1.6rem; border-top: 1px solid var(--line); }
+.entry:first-child { border-top: 0; padding-top: 0; }
+@media (max-width: 640px) { .entry { grid-template-columns: minmax(0, 1fr); gap: .5rem; } }
+.when { font: 400 .8rem/1.5 var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; padding-top: .2rem; }
+.entry h3 { font: 500 var(--step-1)/1.3 var(--body); margin: 0; }
+.org { color: var(--accent-soft); font-size: .95rem; margin: .2rem 0 .8rem; }
+.entry ul { margin: 0; padding-left: 1.1rem; color: var(--muted); display: grid; gap: .4rem; max-width: 62ch; }
+.entry li::marker { color: var(--accent); }
+.tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
+.tag { font: 400 .72rem/1 var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: .38rem .5rem; }
+.tag.funded { color: var(--accent-soft); border-color: rgba(157,124,244,.4); background: var(--accent-wash); }
+
+/* featured project */
+.feature {
+  border: 1px solid rgba(157,124,244,.35); border-radius: 10px; padding: clamp(1.4rem, 3vw, 2rem);
+  background: linear-gradient(135deg, rgba(157,124,244,.10), rgba(157,124,244,0) 60%), var(--surface);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem; align-items: end;
+}
+@media (max-width: 640px) { .feature { grid-template-columns: minmax(0, 1fr); } }
+.feature h3 { font: 400 var(--step-2)/1.2 var(--display); margin: .2rem 0 .6rem; text-wrap: balance; }
+.feature p { margin: 0; color: var(--muted); max-width: 52ch; }
+.feature .ket { font: 400 1.5rem/1 var(--mono); color: var(--accent-soft); white-space: nowrap; }
+
+/* publications */
+.pubs { list-style: none; margin: 0; padding: 0; counter-reset: pub; }
+.pub { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 1rem; padding-block: 1.5rem; border-top: 1px solid var(--line); }
+.pub:first-child { border-top: 0; padding-top: 0; }
+.pub::before { counter-increment: pub; content: "[" counter(pub) "]"; font: 400 .85rem/1.9 var(--mono); color: var(--faint); }
+.pub h3 { font: 400 1.22rem/1.35 var(--display); margin: 0 0 .45rem; text-wrap: pretty; }
+.authors { font-size: .92rem; color: var(--muted); margin: 0; }
+.authors b { color: var(--fg); font-weight: 500; }
+.venue { font-size: .92rem; color: var(--muted); margin: .15rem 0 .7rem; font-style: italic; }
+.status { display: inline-flex; align-items: center; gap: .45rem; font: 500 .7rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: .35rem .55rem; border-radius: 999px; border: 1px solid currentColor; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.s-pub { color: var(--ok); }
+.s-acc { color: var(--accent-soft); }
+.s-sub { color: var(--warn); }
+.pubmeta { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.pubmeta a { font: 400 .78rem/1 var(--mono); }
+
+/* skills */
+.skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 1.75rem 2.5rem; }
+.skillset h3 { font: 500 .72rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 0 0 .8rem; }
+.skillset .tags { margin: 0; }
+.skillset .tag { font-size: .8rem; color: var(--fg); background: var(--surface); }
+
+/* awards */
+.awards { list-style: none; margin: 0; padding: 0; }
+.award { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem 1.5rem; padding-block: 1rem; border-top: 1px solid var(--line); align-items: baseline; }
+.award:first-child { border-top: 0; padding-top: 0; }
+.award b { font-weight: 500; }
+.award span { color: var(--muted); font-size: .92rem; grid-column: 1; }
+.award time { font: 400 .8rem/1 var(--mono); color: var(--faint); grid-column: 2; grid-row: 1; white-space: nowrap; }
+.award .result { color: var(--accent-soft); }
+
+/* leadership */
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: .35rem; }
+.role .when { padding: 0; }
+.role h3 { font: 500 1.02rem/1.3 var(--body); margin: 0; }
+.role .org { margin: 0; font-size: .9rem; }
+.role p { margin: .35rem 0 0; color: var(--muted); font-size: .9rem; }
+
+.beyond { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 2rem; margin-top: 2.5rem; }
+.beyond h3 { font: 500 .72rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 0 0 .8rem; }
+.beyond p { margin: 0; color: var(--muted); }
+.langs { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.langs li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px dashed var(--line); padding-bottom: .5rem; }
+.langs li span:last-child { color: var(--muted); font-size: .9rem; }
+
+/* education */
+.edu { display: grid; gap: 0; }
+.edu .entry h3 { font-size: 1.08rem; }
+.edu .entry p { margin: .2rem 0 0; color: var(--muted); }
+
+/* contact */
+.contact { padding-block: clamp(3.5rem, 8vw, 6rem); }
+.contact h2 { font-size: clamp(2rem, 5vw, 3.2rem); max-width: 16em; }
+.contact p { color: var(--muted); max-width: 46ch; font-size: var(--step-1); }
+.addr { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 1.75rem; }
+.addr code { font: 400 clamp(.85rem, 2.6vw, 1.05rem)/1.3 var(--mono); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .75rem 1rem; user-select: all; overflow-wrap: anywhere; min-width: 0; }
+footer { border-top: 1px solid var(--line); }
+footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding-block: 1.5rem; font: 400 .75rem/1.4 var(--mono); color: var(--faint); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .rise.d1 { animation-delay: .08s; } .rise.d2 { animation-delay: .16s; } .rise.d3 { animation-delay: .24s; }
+  @keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="wrap">
+    <a class="mark" href="#top">Harshita Bose<span>.</span></a>
+    <nav aria-label="Sections">
+      <a href="#interests">Interests</a>
+      <a href="#research">Research</a>
+      <a href="#publications">Publications</a>
+      <a href="#skills">Skills</a>
+      <a href="#honours">Honours</a>
+      <a href="#beyond">Leadership</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow rise">B.Tech. Engineering Physics · Delhi Technological University</p>
+          <h1 class="rise d1">Harshita Bose</h1>
+          <p class="tagline rise d1">Integrated quantum photonics &amp; <em>semiconductor quantum devices</em></p>
+          <p class="lede rise d2">I simulate, design and fabricate devices that control single photons and electrons, from waveguide bends in JCMwave to wire-bonded quantum-dot chips. Most recently at the <strong>Integrated Quantum Photonics Lab, Humboldt-Universität zu Berlin</strong>.</p>
+          <div class="ctas rise d3">
+            <a class="btn primary" href="#publications">Read my publications</a>
+            <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
+            <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
+            <a class="btn" href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">ORCID ↗</a>
+          </div>
+        </div>
+        <figure class="figure portrait rise d2">
+          <div class="photo"><img src="harshita.jpg" width="800" height="1000" alt="Harshita Bose standing in front of the Berlin Cathedral"></div>
+          <figcaption><span>Berliner Dom, Berlin</span><span>Summer 2026 · HU Berlin internship</span></figcaption>
+        </figure>
+      </div>
+
+      <figure class="figure strip">
+        <div class="chip-frame"><canvas id="wg" aria-label="Animated illustration of light pulses travelling through an S-bend waveguide on a photonic chip" role="img"></canvas></div>
+        <figcaption><span>S-bend waveguide · fundamental mode, the kind of structure I designed at HU Berlin</span><span>|E|² at output</span></figcaption>
+      </figure>
+
+      <div class="facts">
+        <div class="fact"><b>9.44<small style="font-size:.55em;color:var(--faint)">/10</small></b><span>CGPA, B.Tech. 2023–27</span></div>
+        <div class="fact"><b>3 / 120</b><span>Department rank</span></div>
+        <div class="fact"><b>4</b><span>Papers &amp; conference talks</span></div>
+        <div class="fact"><b>118<small style="font-size:.55em;color:var(--faint)">/120</small></b><span>TOEFL iBT · CEFR C2</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERESTS -->
+  <section class="block" id="interests">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Research interests</p>
+        <h2>Where light meets the solid state</h2>
+        <p>The questions I want to keep working on through graduate research.</p>
+      </header>
+      <div class="body">
+        <div class="interests">
+          <div class="interest"><span class="sym">n<sub>eff</sub></span><h3>Integrated quantum photonics</h3><p>On-chip circuits that route, interfere and detect single photons.</p></div>
+          <div class="interest"><span class="sym">|0⟩ |1⟩</span><h3>Semiconductor quantum devices</h3><p>Gate-defined structures where charge and spin become qubits.</p></div>
+          <div class="interest"><span class="sym">ħω</span><h3>Quantum emitters &amp; dots</h3><p>Selecting and controlling single emitters electrically.</p></div>
+          <div class="interest"><span class="sym">λ/2n</span><h3>Nanophotonics</h3><p>Confining and shaping light below the diffraction limit.</p></div>
+          <div class="interest"><span class="sym">∇×E</span><h3>Device simulation &amp; fabrication</h3><p>From FEM mode solvers to lithography, deposition and lift-off.</p></div>
+          <div class="interest"><span class="sym">TE₀</span><h3>Quantum photonic waveguides</h3><p>Low-loss bends and couplers for quantum communication.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section class="block" id="research">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Research experience</p>
+        <h2>Labs &amp; cleanrooms</h2>
+        <p>Four groups across Germany and India, from theory and simulation to hands-on fabrication.</p>
+      </header>
+      <div class="body">
+        <ol class="timeline">
+          <li class="entry">
+            <div class="when">May – Aug 2026</div>
+            <div>
+              <h3>Research Intern, Integrated Quantum Photonics Lab</h3>
+              <p class="org">Humboldt-Universität zu Berlin, Germany</p>
+              <ul>
+                <li>Simulated and characterised integrated quantum-photonic waveguides using JCMwave and Python.</li>
+                <li>Designed and optimised S-bends and U-bends for quantum communication applications.</li>
+              </ul>
+              <div class="tags"><span class="tag funded">Humboldt Internship Program · Santander</span><span class="tag">JCMwave</span><span class="tag">Python</span><span class="tag">Waveguide design</span></div>
+            </div>
+          </li>
+          <li class="entry">
+            <div class="when">Jun – Jul 2025</div>
+            <div>
+              <h3>Research Intern, QTRAN Lab</h3>
+              <p class="org">IISER Thiruvananthapuram, India</p>
+              <ul>
+                <li>Designed and implemented a quantum router based on three quantum dots; studied wavefunction dynamics and confinement quantisation, with results validated through experimental measurements. Manuscript in preparation.</li>
+                <li>PCB design and fabrication, chemical etching, soldering, wafer-to-PCB wire bonding and variable-capacitor design.</li>
+              </ul>
+              <div class="tags"><span class="tag">Triple quantum dots</span><span class="tag">Kwant</span><span class="tag">Wire bonding</span><span class="tag">PCB fabrication</span></div>
+            </div>
+          </li>
+          <li class="entry">
+            <div class="when">Jul 2025</div>
+            <div>
+              <h3>Semiconductor Device Fabrication Training</h3>
+              <p class="org">Nanoscale Research Facility, IIT Delhi</p>
+              <ul>
+                <li>Fabricated semiconductor devices in a Class 100/1000 cleanroom: wafer cleaning, oxide-film formation and device lift-off.</li>
+                <li>Spin coating, maskless photolithography and titanium deposition by e-beam evaporation.</li>
+              </ul>
+              <div class="tags"><span class="tag">Cleanroom</span><span class="tag">Photolithography</span><span class="tag">E-beam evaporation</span></div>
+            </div>
+          </li>
+          <li class="entry">
+            <div class="when">Jun – Jul 2024<br>&amp; Dec 2023</div>
+            <div>
+              <h3>Research Intern, Space Systems Lab</h3>
+              <p class="org">IIIT Delhi, India</p>
+              <ul>
+                <li>Evaluated Monte Carlo, Patera, Alfano and Advanced Extrapolated State Propagation techniques for LEO/MEO satellites.</li>
+                <li>Proposed a cluster-based ESPT incorporating machine-learning techniques to improve propagation performance.</li>
+              </ul>
+              <div class="tags"><span class="tag">Orbital mechanics</span><span class="tag">Machine learning</span><span class="tag">Collision probability</span></div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="feature" style="margin-top:2.5rem">
+          <div>
+            <p class="kicker">Undergraduate research project · DTU – IIT Delhi</p>
+            <h3>Numerical modelling and optimisation of high-fidelity spin shuttling in silicon quantum dots</h3>
+            <p>Moving electron spins across a silicon chip without losing their quantum state, a key step towards scalable spin-qubit processors.</p>
+          </div>
+          <div class="ket" aria-hidden="true">|↑⟩ → |↑⟩</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLICATIONS -->
+  <section class="block" id="publications">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Publications &amp; talks</p>
+        <h2>Papers</h2>
+        <p>Journal submissions, conference presentations and proceedings. ORCID <a href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">0009-0006-2827-0848</a>.</p>
+      </header>
+      <div class="body">
+        <ol class="pubs">
+          <li class="pub">
+            <div>
+              <h3>Electrical Selection of Two Integrated Quantum Emitters using Pulse-Programmable Triple Quantum Dots</h3>
+              <p class="authors"><b>H. Bose</b></p>
+              <p class="venue">17th International Conference on Fiber Optics &amp; Photonics (PHOTONICS 2026), IIT Hyderabad, 9–13 Dec 2026</p>
+              <div class="pubmeta"><span class="status s-acc">Accepted</span></div>
+            </div>
+          </li>
+          <li class="pub">
+            <div>
+              <h3>A resonant-tunneling quantum-dot demultiplexer for scalable cryogenic single-electron routing</h3>
+              <p class="authors">R. Bharadwaj, <b>H. Bose</b>, M. Thalakulam</p>
+              <p class="venue">Journal of Physics: Condensed Matter, Oct 2026</p>
+              <div class="pubmeta"><span class="status s-sub">Submitted</span></div>
+            </div>
+          </li>
+          <li class="pub">
+            <div>
+              <h3>Pulse-Programmable Processing in Coulomb-Blockaded Triple Quantum Dots for Hybrid Quantum Optical Architectures</h3>
+              <p class="authors"><b>H. Bose</b></p>
+              <p class="venue">XLIX OSI Symposium, Frontiers in Optics and Photonics (FOP 2026), New Delhi, 25–28 Sept 2026</p>
+              <div class="pubmeta"><span class="status s-pub">Presented</span></div>
+            </div>
+          </li>
+          <li class="pub">
+            <div>
+              <h3>Transit Photometry for Estimating the Velocity of Exoplanets and Specific Defence Applications</h3>
+              <p class="authors"><b>H. Bose</b></p>
+              <p class="venue">Proc. 2024 IEEE Space, Aerospace and Defence Conference (SPACE), Bangalore, pp. 450–453</p>
+              <div class="pubmeta"><span class="status s-pub">Published</span><a href="https://doi.org/10.1109/SPACE63117.2024.10667777" target="_blank" rel="noopener">DOI 10.1109/SPACE63117.2024.10667777 ↗</a></div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section class="block" id="skills">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Technical skills</p>
+        <h2>Toolkit</h2>
+        <p>Simulation, fabrication and the code that ties them together.</p>
+      </header>
+      <div class="body skills">
+        <div class="skillset"><h3>Quantum &amp; photonic simulation</h3><div class="tags"><span class="tag">JCMwave</span><span class="tag">Kwant</span><span class="tag">COMSOL</span><span class="tag">Qucs</span><span class="tag">KLayout</span></div></div>
+        <div class="skillset"><h3>Fabrication &amp; electronics</h3><div class="tags"><span class="tag">Wafer microfabrication</span><span class="tag">Photolithography</span><span class="tag">E-beam evaporation</span><span class="tag">Wire bonding</span><span class="tag">PCB design</span></div></div>
+        <div class="skillset"><h3>Programming &amp; data</h3><div class="tags"><span class="tag">Python</span><span class="tag">MATLAB</span><span class="tag">C/C++</span><span class="tag">LaTeX</span></div></div>
+        <div class="skillset"><h3>Physics</h3><div class="tags"><span class="tag">Quantum mechanics</span><span class="tag">Semiconductor devices</span><span class="tag">Advanced mathematical physics</span></div></div>
+        <div class="skillset"><h3>Also</h3><div class="tags"><span class="tag">ML: CNNs, reinforcement learning</span><span class="tag">AI for materials science</span><span class="tag">Digital &amp; analog electronics</span><span class="tag">Arduino</span><span class="tag">Raspberry Pi</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION + HONOURS -->
+  <section class="block" id="honours">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Education &amp; honours</p>
+        <h2>Recognition</h2>
+        <p>Scholarships, selections and prizes.</p>
+      </header>
+      <div class="body">
+        <ul class="awards">
+          <li class="award"><b>Humboldt Internship Program Scholarship</b><time>May–Aug 2026</time><span>Humboldt-Universität zu Berlin, funded by Santander Bank</span></li>
+          <li class="award"><b>NSTC International Internship Pilot Program (IIPP)</b><time>May 2026</time><span>Taiwan National Science and Technology Council · <span class="result">Selected</span></span></li>
+          <li class="award"><b>ThinkSwiss Research Scholarship</b><time>May 2025</time><span><span class="result">Shortlisted</span></span></li>
+          <li class="award"><b>Invictus Hackathon</b><time>Feb 2024</time><span><span class="result">2nd Prize</span></span></li>
+          <li class="award"><b>Indian National Space Settlement Design Competition</b><time>2021</time><span>Team Aurora, Aeross · <span class="result">Qualifier</span></span></li>
+          <li class="award"><b>Hindustan Times Open Essay Competition</b><time>2015</time><span><span class="result">Winner</span></span></li>
+        </ul>
+
+        <div class="edu" style="margin-top:2.75rem">
+          <div class="entry">
+            <div class="when">2023 – 2027</div>
+            <div><h3>Delhi Technological University</h3><p>B.Tech. in Engineering Physics · CGPA 9.44/10 · Department rank 3 of 120</p></div>
+          </div>
+          <div class="entry">
+            <div class="when">2009 – 2023</div>
+            <div><h3>Delhi Public School, R. K. Puram</h3><p>CBSE Class XII: 93%. Gold Medal for Academic Excellence; Scholar Badge for 7 consecutive years; Blue Blazer awardee.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERSHIP -->
+  <section class="block" id="beyond">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Leadership &amp; service</p>
+        <h2>Beyond the lab</h2>
+        <p>Mentoring, outreach and building things with teams.</p>
+      </header>
+      <div class="body">
+        <div class="roles">
+          <div class="role"><span class="when">Aug 2024 – May 2026</span><h3>Student Member</h3><p class="org">IEEE</p><p>Mentor for Electronics and Embedded Systems at Techweek 2025; gave a motivational talk to first-year students.</p></div>
+          <div class="role"><span class="when">Feb 2024 – May 2026</span><h3>Member</h3><p class="org">HEIV – Society for Popularization of Science</p><p>Science communication and public outreach; recruitment and expansion of the society.</p></div>
+          <div class="role"><span class="when">Sep 2023 – May 2024</span><h3>Member</h3><p class="org">CANSAT DTU Institute Team</p><p>Can-sized satellite challenge run by the American Astronautical Society and ISRO; worked on descent, stabilisation and navigation.</p></div>
+          <div class="role"><span class="when">Mar – Aug 2021</span><h3>Volunteer</h3><p class="org">Feeding Hope</p><p>Fundraising for ration distribution during COVID-19.</p></div>
+        </div>
+
+        <div class="beyond">
+          <div>
+            <h3>Languages</h3>
+            <ul class="langs">
+              <li><span>English</span><span>Proficient · TOEFL 118/120</span></li>
+              <li><span>Hindi</span><span>Proficient</span></li>
+              <li><span>Bengali</span><span>Proficient</span></li>
+              <li><span>German</span><span>Basic</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Music &amp; sport</h3>
+            <p>Third year of Hindustani classical music training; Rabindra Sangeet and harmonium. On court for lawn tennis, and in the pool for swimming.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="wrap">
+      <p class="kicker">Contact</p>
+      <h2>Open to graduate research positions in quantum photonics and quantum devices.</h2>
+      <p>I'd be glad to hear about research groups, collaborations or opportunities.</p>
+      <div class="addr">
+        <code id="email">harshitabose_23ep041@dtu.ac.in</code>
+        <button class="btn" type="button" id="copy">Copy email</button>
+        <a class="btn" href="Harshita_Bose_CV.pdf" target="_blank" rel="noopener">CV (PDF)</a>
+        <a class="btn" href="https://www.linkedin.com/in/harshita-b-86b70b296/" target="_blank" rel="noopener">LinkedIn ↗</a>
+            <a class="btn" href="https://orcid.org/0009-0006-2827-0848" target="_blank" rel="noopener">ORCID ↗</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Harshita Bose</span><span>New Delhi, India</span></div>
+</footer>
+
+<script>
+(() => {
+  /* ---------- copy email ---------- */
+  const btn = document.getElementById('copy');
+  const email = document.getElementById('email');
+  btn.addEventListener('click', () => {
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy email', 1800); };
+    const fallback = () => {
+      const r = document.createRange(); r.selectNodeContents(email);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Selected, press Ctrl+C';
+      setTimeout(() => btn.textContent = 'Copy email', 2500);
+    };
+    try { navigator.clipboard.writeText(email.textContent.trim()).then(done, fallback); } catch (e) { fallback(); }
+  });
+
+  /* ---------- active nav link ---------- */
+  const links = [...document.querySelectorAll('.bar nav a')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('on')); map.get(e.target.id)?.classList.add('on'); } });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    map.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+  }
+
+  /* ---------- S-bend waveguide with a travelling pulse ---------- */
+  const cv = document.getElementById('wg');
+  const ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = 0, H = 0, pts = [], cum = [], L = 0;
+
+  function bez(p0, p1, p2, p3, t) {
+    const u = 1 - t;
+    return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3;
+  }
+  function build() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const y1 = H * 0.32, y2 = H * 0.68, xa = W * 0.22, xb = W * 0.78;
+    pts = [];
+    for (let x = 0; x <= xa; x += 2) pts.push([x, y1]);
+    for (let i = 1; i <= 160; i++) {
+      const t = i / 160;
+      pts.push([bez(xa, (xa + xb) / 2, (xa + xb) / 2, xb, t), bez(y1, y1, y2, y2, t)]);
+    }
+    for (let x = xb + 2; x <= W; x += 2) pts.push([x, y2]);
+    cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+    L = cum[cum.length - 1];
+  }
+  function at(s) {
+    s = ((s % L) + L) % L;
+    let lo = 0, hi = cum.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] < s) lo = m; else hi = m; }
+    const f = (s - cum[lo]) / ((cum[hi] - cum[lo]) || 1);
+    return [pts[lo][0] + (pts[hi][0]-pts[lo][0]) * f, pts[lo][1] + (pts[hi][1]-pts[lo][1]) * f];
+  }
+  function path() {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  }
+  function frame(time) {
+    ctx.clearRect(0, 0, W, H);
+    // substrate grid
+    ctx.strokeStyle = 'rgba(164,157,183,0.07)'; ctx.lineWidth = 1;
+    const g = Math.max(18, W / 22);
+    for (let x = g; x < W; x += g) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = g; y < H; y += g) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    // cladding + core
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    path(); ctx.strokeStyle = 'rgba(157,124,244,0.10)'; ctx.lineWidth = 26; ctx.stroke();
+    path(); ctx.strokeStyle = '#2f2843'; ctx.lineWidth = 9; ctx.stroke();
+    path(); ctx.strokeStyle = 'rgba(196,178,255,0.35)'; ctx.lineWidth = 1.2; ctx.stroke();
+    // pulses (two photons)
+    const speed = L / 4200;
+    const base = reduce ? L * 0.55 : (time || 0) * speed;
+    for (const off of [0, L / 2]) {
+      const head = base + off;
+      for (let k = 0; k < 40; k++) {
+        const [x, y] = at(head - k * 3);
+        const a = Math.exp(-k / 9) * 0.9;
+        const rad = 10 + 6 * Math.exp(-k / 6);
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, rad);
+        gr.addColorStop(0, `rgba(214,200,255,${a})`);
+        gr.addColorStop(0.4, `rgba(157,124,244,${a * 0.5})`);
+        gr.addColorStop(1, 'rgba(157,124,244,0)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // mode profile at the output facet
+    const y2 = H * 0.68, x0 = W - 14, amp = Math.min(46, W * 0.06);
+    ctx.beginPath();
+    const span = Math.min(40, H * 0.28), sig = span / 3.6;
+    for (let dy = -span; dy <= span; dy += 1) {
+      const v = Math.exp(-(dy * dy) / (2 * sig * sig));
+      const px = x0 - v * amp, py = y2 + dy;
+      dy === -span ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = 'rgba(196,178,255,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = 'rgba(164,157,183,0.75)';
+    ctx.font = '500 10px "JetBrains Mono", ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('|E|²', x0 - amp - 6, y2 - span * 0.6);
+    ctx.textAlign = 'left';
+    ctx.fillText('in', 10, H * 0.32 - 14);
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  build(); frame(0);
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { build(); if (reduce) frame(0); }, 120); });
+})();
+</script>
+</body>
+</html>
