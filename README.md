@@ -77,6 +77,7 @@ there is sent anywhere:
 - https://harshita-bose.github.io/GRAD/practice/apply.html (application page with tricky cases)
 - https://harshita-bose.github.io/GRAD/practice/tricky.html (different wordings, other formats, type-to-search dropdowns)
 - https://harshita-bose.github.io/GRAD/practice/recommender.html (built like Princeton's "Add Recommender" pop-up)
+- https://harshita-bose.github.io/GRAD/practice/institution.html (an "Add Institution" pop-up: school search, preset country, 3-part dates, Level of Study, Yes/No boxes)
 - https://harshita-bose.github.io/GRAD/practice/address.html (an "Add Address" pop-up: preset country, one Street box, Region that loads after Country)
 
 ## How GradFill reads a question
@@ -95,6 +96,10 @@ there is sent anywhere:
 - **Questions that depend on earlier answers** (Region after Country, extra questions that appear)
   are filled in follow-up rounds right after, when "fill straight away" is on. A dropdown still on the
   page's own preset (e.g. "United States") is replaced; a choice you made is never overwritten without asking.
+- **"Add Institution" forms** use your post-secondary degree. If exactly one saved education entry is a
+  degree (not Class XII / CBSE / high school), GradFill uses it without asking. Level of Study
+  ("Undergraduate") and "Did you receive a degree…? Yes/No" are answered from it. A school-search box
+  picks your institution from the suggestions, or keeps your typed name if it isn't listed.
 - **One "Street" box** gets both address lines (one per line) when the form has no separate line-2 box.
 - **Dropdowns, including type-to-search boxes,** are picked automatically when one option clearly
   matches. If two options are equally close, GradFill asks instead.

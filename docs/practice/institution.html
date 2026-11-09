@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Institution</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .ui-dialog { background: var(--card); color: var(--ink); width: min(660px, 100%); border-radius: 6px; }
+  .ui-dialog-titlebar { background: var(--chip); padding: 10px 14px; font-weight: 700; }
+  .ui-dialog-content { padding: 14px; }
+  table.plain td { padding: 4px 8px; vertical-align: top; } table.plain td.label { width: 150px; }
+  table.plain input:not([type=checkbox]) { width: 340px; max-width: 100%; } table.plain select { width: auto; }
+  .combo { position: relative; } .combo ul { position: absolute; z-index: 5; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0; list-style: none; background: var(--card); border: 1px solid var(--line); }
+  .combo li { padding: 6px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main><h2>Academic history</h2><p>Built like a Slate “Add Institution” pop-up.</p></main>
+<div class="overlay">
+  <div class="ui-dialog" role="dialog" aria-labelledby="inst-title">
+    <div class="ui-dialog-titlebar"><span id="inst-title" class="ui-dialog-title">Add Institution</span></div>
+    <form class="ui-dialog-content" onsubmit="event.preventDefault()">
+      <p>Begin typing the institution's name. If your institution is not available, manually enter the information in each field.</p>
+      <table class="plain"><tbody>
+        <tr><td class="label"><label for="inst">Institution*</label></td><td><div class="combo">
+          <input id="inst" role="combobox" aria-autocomplete="list" aria-controls="inst-list" autocomplete="off"><ul id="inst-list" role="listbox" hidden></ul></div></td></tr>
+        <tr><td class="label"><label for="country">Country</label></td><td><select id="country"><option value=""></option><option value="DE">Germany</option><option value="IN">India</option><option value="US">United States</option></select></td></tr>
+        <tr><td class="label"><label for="city">City</label></td><td><input id="city"></td></tr>
+        <tr><td class="label"><label for="state">State</label></td><td><select id="state"></select></td></tr>
+        <tr><td class="label"><label>Start Date*</label></td><td><select name="start_m"><option value=""></option><option value='01'>January</option><option value='02'>February</option><option value='03'>March</option><option value='04'>April</option><option value='05'>May</option><option value='06'>June</option><option value='07'>July</option><option value='08'>August</option><option value='09'>September</option><option value='10'>October</option><option value='11'>November</option><option value='12'>December</option></select> <select name="start_d"><option value=""></option><option value='01'>1</option><option value='02'>2</option><option value='03'>3</option><option value='04'>4</option><option value='05'>5</option><option value='06'>6</option><option value='07'>7</option><option value='08'>8</option><option value='09'>9</option><option value='10'>10</option><option value='11'>11</option><option value='12'>12</option><option value='13'>13</option><option value='14'>14</option><option value='15'>15</option><option value='16'>16</option><option value='17'>17</option><option value='18'>18</option><option value='19'>19</option><option value='20'>20</option><option value='21'>21</option><option value='22'>22</option><option value='23'>23</option><option value='24'>24</option><option value='25'>25</option><option value='26'>26</option><option value='27'>27</option><option value='28'>28</option><option value='29'>29</option><option value='30'>30</option><option value='31'>31</option></select> <select name="start_y"><option value=""></option><option value='2032'>2032</option><option value='2031'>2031</option><option value='2030'>2030</option><option value='2029'>2029</option><option value='2028'>2028</option><option value='2027'>2027</option><option value='2026'>2026</option><option value='2025'>2025</option><option value='2024'>2024</option><option value='2023'>2023</option><option value='2022'>2022</option><option value='2021'>2021</option><option value='2020'>2020</option><option value='2019'>2019</option><option value='2018'>2018</option><option value='2017'>2017</option><option value='2016'>2016</option><option value='2015'>2015</option><option value='2014'>2014</option><option value='2013'>2013</option><option value='2012'>2012</option><option value='2011'>2011</option><option value='2010'>2010</option><option value='2009'>2009</option><option value='2008'>2008</option><option value='2007'>2007</option><option value='2006'>2006</option><option value='2005'>2005</option><option value='2004'>2004</option><option value='2003'>2003</option><option value='2002'>2002</option><option value='2001'>2001</option><option value='2000'>2000</option><option value='1999'>1999</option><option value='1998'>1998</option><option value='1997'>1997</option><option value='1996'>1996</option><option value='1995'>1995</option><option value='1994'>1994</option><option value='1993'>1993</option><option value='1992'>1992</option><option value='1991'>1991</option></select></td></tr>
+        <tr><td class="label"><label>End Date*</label></td><td><select name="end_m"><option value=""></option><option value='01'>January</option><option value='02'>February</option><option value='03'>March</option><option value='04'>April</option><option value='05'>May</option><option value='06'>June</option><option value='07'>July</option><option value='08'>August</option><option value='09'>September</option><option value='10'>October</option><option value='11'>November</option><option value='12'>December</option></select> <select name="end_d"><option value=""></option><option value='01'>1</option><option value='02'>2</option><option value='03'>3</option><option value='04'>4</option><option value='05'>5</option><option value='06'>6</option><option value='07'>7</option><option value='08'>8</option><option value='09'>9</option><option value='10'>10</option><option value='11'>11</option><option value='12'>12</option><option value='13'>13</option><option value='14'>14</option><option value='15'>15</option><option value='16'>16</option><option value='17'>17</option><option value='18'>18</option><option value='19'>19</option><option value='20'>20</option><option value='21'>21</option><option value='22'>22</option><option value='23'>23</option><option value='24'>24</option><option value='25'>25</option><option value='26'>26</option><option value='27'>27</option><option value='28'>28</option><option value='29'>29</option><option value='30'>30</option><option value='31'>31</option></select> <select name="end_y"><option value=""></option><option value='2032'>2032</option><option value='2031'>2031</option><option value='2030'>2030</option><option value='2029'>2029</option><option value='2028'>2028</option><option value='2027'>2027</option><option value='2026'>2026</option><option value='2025'>2025</option><option value='2024'>2024</option><option value='2023'>2023</option><option value='2022'>2022</option><option value='2021'>2021</option><option value='2020'>2020</option><option value='2019'>2019</option><option value='2018'>2018</option><option value='2017'>2017</option><option value='2016'>2016</option><option value='2015'>2015</option><option value='2014'>2014</option><option value='2013'>2013</option><option value='2012'>2012</option><option value='2011'>2011</option><option value='2010'>2010</option><option value='2009'>2009</option><option value='2008'>2008</option><option value='2007'>2007</option><option value='2006'>2006</option><option value='2005'>2005</option><option value='2004'>2004</option><option value='2003'>2003</option><option value='2002'>2002</option><option value='2001'>2001</option><option value='2000'>2000</option><option value='1999'>1999</option><option value='1998'>1998</option><option value='1997'>1997</option><option value='1996'>1996</option><option value='1995'>1995</option><option value='1994'>1994</option><option value='1993'>1993</option><option value='1992'>1992</option><option value='1991'>1991</option></select></td></tr>
+        <tr><td class="label"><label for="level">Level of Study*</label></td><td><select id="level"><option value=""></option><option>Associates</option><option>Undergraduate</option><option>Graduate</option><option>Non-Degree</option></select></td></tr>
+        <tr><td class="label">Did you receive OR will you be receiving a degree from this institution?</td>
+          <td><label><input type="checkbox" name="deg_yes"> Yes</label><br><label><input type="checkbox" name="deg_no"> No</label></td></tr>
+      </tbody></table>
+      <p><button type="button" class="button">Save</button> <button type="button">Cancel</button></p>
+    </form>
+  </div>
+</div>
+<script>
+  const SCHOOLS = ["Delhi Technological University", "Delhi University", "Indian Institute of Technology Delhi"];
+  const STATES = { US: ["California", "New York"], IN: ["Delhi", "Karnataka", "Maharashtra"], DE: ["Berlin"] };
+  const inst = document.getElementById("inst"), list = document.getElementById("inst-list");
+  const country = document.getElementById("country"), state = document.getElementById("state");
+  function loadStates() {
+    state.replaceChildren(new Option("Select State", ""));
+    setTimeout(() => (STATES[country.value] || []).forEach(s => state.append(new Option(s, s))), 300);
+  }
+  inst.addEventListener("input", () => {
+    const q = inst.value.toLowerCase();
+    list.replaceChildren(...SCHOOLS.filter(s => q && s.toLowerCase().includes(q)).map(s => {
+      const li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = s;
+      li.addEventListener("mousedown", e => { e.preventDefault(); inst.value = s; inst.dataset.chosen = s; list.hidden = true; });
+      return li; }));
+    list.hidden = !list.children.length;
+  });
+  country.addEventListener("change", loadStates);
+  country.value = "US";   // preset by script, like the real portal
+  loadStates();
+</script>
+</body>
+</html>

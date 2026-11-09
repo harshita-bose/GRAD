@@ -24,7 +24,9 @@ PROFILE = {
     "address": {"line1": "1 Main Rd", "line2": "", "city": "Delhi", "state": "Delhi", "postal_code": "110042", "country": "India"},
     "citizenship": {"country_of_citizenship": "India", "us_citizen": "No"},
     "education": [{"institution": "Delhi Technological University", "major": "Engineering Physics", "degree": "B.Tech",
-                   "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"}, {}, {}],
+                   "city": "Delhi", "state": "Delhi", "country": "India",
+                   "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"},
+                  {"institution": "Delhi Public School", "degree": "Class XII (CBSE)", "end_date": "2023-05-31"}, {}],
     "employment": [{}, {}, {}],
     "recommenders": [{"prefix": "Dr.", "first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in", "title": "Professor",
                       "institution": "Delhi Technological University", "phone": "+91 98991 30814", "relationship": "Thesis supervisor"},
@@ -210,6 +212,21 @@ def main():
         assert "preset" in card(page, "Country").inner_text()
         sw.evaluate("""async () => { const { profile } = await chrome.storage.local.get('profile');
             profile.address.line2 = ''; await chrome.storage.local.set({ profile }); }""")
+
+        # --- an "Add Institution" pop-up: post-secondary degree picked without asking, every field filled
+        page.goto(base + "/practice/institution.html")
+        open_gradfill(sw)
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked")
+        page.wait_for_timeout(500)
+        got = {k: page.input_value(sel) for k, sel in {"inst": "#inst", "country": "#country", "city": "#city", "state": "#state",
+               "sm": "[name=start_m]", "sd": "[name=start_d]", "sy": "[name=start_y]", "em": "[name=end_m]", "ed": "[name=end_d]",
+               "ey": "[name=end_y]", "level": "#level"}.items()}
+        assert got == {"inst": "Delhi Technological University", "country": "IN", "city": "Delhi", "state": "Delhi",
+                       "sm": "08", "sd": "01", "sy": "2023", "em": "05", "ed": "31", "ey": "2027", "level": "Undergraduate"}, got
+        assert page.get_attribute("#inst", "data-chosen") == "Delhi Technological University"  # picked from the suggestions
+        assert page.is_checked("[name=deg_yes]") and not page.is_checked("[name=deg_no]")
+        assert "Which education" not in panel(page).inner_text()  # never asked: only one post-secondary entry
+        assert panel(page).locator(".card.flag").count() == 0, panel(page).locator(".card.flag").all_inner_texts()
 
         # --- a recommender pop-up (like Princeton's): never the applicant's name; you choose the recommender
         page.goto(base + "/practice/recommender.html")

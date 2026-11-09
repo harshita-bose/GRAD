@@ -45,6 +45,7 @@ GF.SECTIONS = [
     { k: "institution", label: "Institution" },
     { k: "city", label: "City" },
     { k: "country", label: "Country" },
+    { k: "state", label: "State / province" },
     { k: "degree", label: "Degree", hint: "e.g. B.Tech" },
     { k: "major", label: "Major / field" },
     { k: "start_date", label: "Start date", type: "date" },
@@ -161,9 +162,12 @@ GF.RULES = [
   ["employment.*.employer", /employer|company|organi[sz]ation( name)?$|^employment .*\bname\b/i, "high"],
   ["employment.*.title", /job title|\bposition\b|\brole\b|designation|^employment .*\btitle\b/i, "high"],
 
+  ["education.*.has_degree", rx(`^${EDU}.*((receive|receiving|earn|earned|awarded|conferr|complet)\\w*.*\\bdegree\\b|\\bdegree\\b.*(received|awarded|conferred|expected|completed))`), "high"],
+  ["education.*.degree", rx(`^${EDU}.*(level of study|degree level|level of (education|degree)|type of degree|degree type|program level)`), "high"],
   ["education.*.start_date", rx(`^${EDU}.*(start|from|begin|entr(y|ance)|attended from)`), "high"],
   ["education.*.end_date", rx(`^${EDU}.*(\\bend\\b|\\bto\\b|until|graduat|completion|conferr|award)`), "high"],
   ["education.*.city", rx(`^${EDU}.*(\\bcity\\b|\\btown\\b)`), "high"],
+  ["education.*.state", rx(`^${EDU}.*(\\bstate\\b|province|region)`), "high"],
   ["education.*.country", rx(`^${EDU}.*country`), "high"],
   ["education.*.institution", /institution|university|college|school name|name of (the )?school|^education .*\bname\b/i, "high"],
   ["education.*.major", /major|field of study|discipline|concentration|specialization|branch/i, "high"],
@@ -225,9 +229,13 @@ GF.HEADINGS = [
   ["address", /address|contact information|mailing|residence/i, "address"],
 ];
 
+// School-level entries (not post-secondary): "Add Institution" style forms never mean these.
+GF.SCHOOL_LEVEL = /\bclass\b|grade \d|\bxii\b|12th|10th|high school|higher secondary|senior secondary|\bsecondary\b|cbse|icse|\bisc\b|\bssc\b|\bhsc\b|a-?levels?|o-?levels?|matric/i;
+
 // Details that are built from others, offered when a form asks for a whole name at once.
 GF.DERIVED = {
   full_name: { label: "Full name (first middle last)", from: ["first_name", "middle_name", "last_name"] },
+  has_degree: { label: "Received / will receive a degree (Yes when a degree is saved)", yesIf: "degree" },
 };
 
 // Upload fields: the panel tells you which document is wanted; you attach it yourself.

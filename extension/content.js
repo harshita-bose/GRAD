@@ -9,6 +9,7 @@
     ctx: Object.fromEntries(GF.LIST_SECTIONS.map(s => [s, 0])),
     active: null, // list section that bare "start/end date" fields refer to
     chosen: {}, // list sections whose entry you picked in the panel on this page
+    auto: {},   // list sections whose entry GradFill could work out (your only post-secondary degree)
     ours: new WeakMap(), // field → value GradFill typed there, so switching entries can replace it
     maps: {}, allMaps: {}, // fields you taught GradFill, per site: { host: { learnKey: profileKey | "-" } }
   };
@@ -137,7 +138,7 @@
   }
 
   function scan() {
-    const out = [], groups = new Map(), cache = new Map();
+    const out = [], groups = new Map(), cache = new Map(), boxIds = new Map(), fresh = new Map();
     let n = 0;
     for (const el of document.querySelectorAll("input, select, textarea, [role=combobox]")) {
       if (el.closest("#gradfill-host")) continue;
@@ -155,10 +156,13 @@
         required: el.required || el.getAttribute("aria-required") === "true",
         placeholder: el.placeholder || "", maxlength: el.maxLength > 0 ? el.maxLength : null,
         section: sectionOf(el, cache), id: el.id || "", autocomplete: el.getAttribute("autocomplete") || "",
+        fresh: isFresh(el, fresh),
         hintText: hintFor(el),
       };
       if (type === "radio" || type === "checkbox") {
-        const key = type + ":" + (el.name || f.gid);
+        const box = el.closest(WRAP) || el.parentElement;
+        if (!boxIds.has(box)) boxIds.set(box, boxIds.size);
+        const key = type === "checkbox" ? "checkbox:" + boxIds.get(box) : type + ":" + (el.name || f.gid);
         const opt = { text: clean(labelFor(el)), value: el.value, el, checked: el.checked };
         if (groups.has(key)) { groups.get(key).options.push(opt); groups.get(key).required ||= f.required; continue; }
         Object.assign(f, { label: clean(questionLabel(el)) || opt.text || el.name, options: [opt], group: true });
@@ -189,6 +193,14 @@
     }
     return out;
   }
+  // A freshly opened "Add …" form where nothing has been typed yet: its dropdown values are the page's presets.
+  function isFresh(el, cache) {
+    const box = el.closest(DIALOG) || el.closest("form");
+    if (!box) return false;
+    if (!cache.has(box)) cache.set(box, ![...box.querySelectorAll("input, textarea")]
+      .some(i => !/^(hidden|radio|checkbox|submit|button|image|reset)$/i.test(i.type) && !i.closest("#gradfill-host") && i.value.trim()));
+    return cache.get(box);
+  }
   // Format hints near a field ("Format: DD-MM-YYYY") and its aria-describedby text.
   function hintFor(el) {
     const ids = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
@@ -201,6 +213,7 @@
   const FILLABLE = new Set(["ok", "verify", "flag"]);
   function pick(obj, k) {
     const d = GF.DERIVED[k];
+    if (d && d.yesIf) return obj[d.yesIf] ? "Yes" : "";
     if (d) return d.from.map(x => obj[x]).filter(Boolean).join(" ");
     return obj[k];
   }
@@ -314,7 +327,8 @@
     if (f.type === "password") return { ...row, status: "manual", notes: ["Password — always typed by you"] };
     const why = manualReason(label) || (f.options && f.group ? f.options.map(o => manualReason(o.text)).find(Boolean) : null);
     if (why) return { ...row, status: "manual", notes: [`Never filled by GradFill: ${why}`] };
-    if (f.type === "checkbox") return { ...row, status: "manual", notes: ["Checkbox — tick it yourself if it applies"] };
+    const yesNo = f.group && f.options.length === 2 && f.options.every(o => /^(yes|no)\b/i.test(o.text));
+    if (f.type === "checkbox" && !yesNo) return { ...row, status: "manual", notes: ["Checkbox — tick it yourself if it applies"] };
     if (f.type === "file") {
       const doc = GF.DOCS.find(([rx]) => rx.test(label));
       return { ...row, status: "upload", notes: [doc ? `Upload your ${doc[1]} here yourself` : "File upload — attach the right document yourself"] };
@@ -348,6 +362,7 @@
     else if (r.list) {
       const filled = (S.profile[r.list] || []).filter(e => Object.values(e).some(Boolean)).length;
       if (S.chosen[r.list]) soft.push(`${title(r.list)} #${r.index + 1}, as you chose`);
+      else if (S.auto[r.list] === r.index) soft.push(`Your degree: ${title(r.list)} #${r.index + 1} (${entryName(r.list, S.profile[r.list][r.index])}) — change at the top if needed`);
       else if (filled > 1) notes.push(`Which ${title(r.list).toLowerCase().replace(/s$/, "")}? Choose at the top of this panel (now showing #${r.index + 1})`);
     }
     if (/full_name$/.test(row.key)) soft.push("Full name built as first + middle + last — check the order this form wants");
@@ -402,7 +417,7 @@
     const curOpt = f.tag === "select" && f.current ? f.options.find(o => o.value === f.current) : null;
     if (curOpt && !GF.isPlaceholder(curOpt.text) && row.option && row.option.value !== f.current && !S.ours.has(f.el)) {
       // the page's own preset (e.g. "United States") may be replaced; something you picked may not
-      if (f.current === f.preset) soft.push(`Replaces the page's preset "${curOpt.text}"`);
+      if (f.current === f.preset || f.fresh) soft.push(`Replaces the page's preset "${curOpt.text}"`);
       else notes.push(`Currently "${curOpt.text}" — will be changed`);
     }
 
@@ -419,6 +434,12 @@
   }
 
   function plan() {
+    // forms asking for an institution mean post-secondary study: with exactly one degree saved, use it
+    S.auto = {};
+    const edu = (S.profile && S.profile.education) || [];
+    const degrees = edu.map((e, i) => [e, i]).filter(([e]) => Object.values(e).some(Boolean) &&
+      !GF.SCHOOL_LEVEL.test(`${e.degree} ${e.institution}`));
+    if (!S.chosen.education && degrees.length === 1) { S.auto.education = degrees[0][1]; S.ctx.education = degrees[0][1]; }
     S.rows = scan().map(planField);
     S.rows.forEach((r, i) => (r.n = i + 1));
     // a single "Street" box and no line-2 box on the page: both address lines go in that one box
@@ -466,6 +487,14 @@
     let opts = await waitFor(() => listOptions(el), 2500);
     if (!opts.length && isInput) { press(el); opts = await waitFor(() => listOptions(el), 1500); }
     const c = GF.chooseOption(opts, variants);
+    if ((!c.opt || !c.sure) && isInput && !el.closest("[role=combobox]:not(input)") && el.getAttribute("aria-autocomplete") !== "none") {
+      // a search box that also takes typed text ("if your school is not listed, enter it manually")
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      setNative(el, variants[0]); fire(el, "input", "change");
+      r.value = variants[0];
+      r.soft.push(opts.length ? "No suggestion matched clearly — kept your text; pick a suggestion if yours is listed" : "No suggestions appeared — typed your text");
+      return null;
+    }
     if (!c.opt || !c.sure) {
       el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
       if (isInput) { setNative(el, ""); fire(el, "input"); }
@@ -692,7 +721,7 @@
       // rows whose entry comes from a numbered heading ("Recommender 2") don't follow the picker
       if (S.rows.filter(r => r.list === sec).every(r => r.f.section && r.f.section.sec === sec && r.f.section.index != null)) continue;
       const entries = S.profile[sec] || [];
-      const undecided = !S.chosen[sec] && entries.filter(e => Object.values(e).some(Boolean)).length > 1;
+      const undecided = !S.chosen[sec] && S.auto[sec] == null && entries.filter(e => Object.values(e).some(Boolean)).length > 1;
       const sel = h("select", { "aria-label": `Which ${title(sec).toLowerCase()} entry`, onchange: e => e.target.value !== "" && switchEntry(sec, Number(e.target.value)) },
         undecided ? h("option", { value: "", selected: true }, "— choose —") : null,
         entries.map((e, i) => h("option", { value: i, selected: !undecided && i === S.ctx[sec] },
