@@ -17,7 +17,9 @@
 </head>
 <body>
 <header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
-<main><h2>Academic history</h2><p>Built like a Slate “Add Institution” pop-up.</p></main>
+<nav aria-label="Site"><ul role="menu" style="display:flex;gap:12px;list-style:none;padding:8px 16px;margin:0">
+  <li role="menuitem"><a href="#tour" onclick="document.body.dataset.nav='clicked'">Delhi Technological University campus tour</a></li><li role="menuitem"><a href="#help">Help</a></li></ul></nav>
+<main><h2>Academic history</h2><p>Built like a Slate “Add Institution” pop-up. The school suggestions carry no special markup (like jQuery UI's), and the menu above must never be clicked.</p></main>
 <div class="overlay">
   <div class="ui-dialog" role="dialog" aria-labelledby="inst-title">
     <div class="ui-dialog-titlebar"><span id="inst-title" class="ui-dialog-title">Add Institution</span></div>
@@ -25,7 +27,7 @@
       <p>Begin typing the institution's name. If your institution is not available, manually enter the information in each field.</p>
       <table class="plain"><tbody>
         <tr><td class="label"><label for="inst">Institution*</label></td><td><div class="combo">
-          <input id="inst" role="combobox" aria-autocomplete="list" aria-controls="inst-list" autocomplete="off"><ul id="inst-list" role="listbox" hidden></ul></div></td></tr>
+          <input id="inst" class="ui-autocomplete-input" autocomplete="off"></div></td></tr>
         <tr><td class="label"><label for="country">Country</label></td><td><select id="country"><option value=""></option><option value="DE">Germany</option><option value="IN">India</option><option value="US">United States</option></select></td></tr>
         <tr><td class="label"><label for="city">City</label></td><td><input id="city"></td></tr>
         <tr><td class="label"><label for="state">State</label></td><td><select id="state"></select></td></tr>
@@ -42,7 +44,11 @@
 <script>
   const SCHOOLS = ["Delhi Technological University", "Delhi University", "Indian Institute of Technology Delhi"];
   const STATES = { US: ["California", "New York"], IN: ["Delhi", "Karnataka", "Maharashtra"], DE: ["Berlin"] };
-  const inst = document.getElementById("inst"), list = document.getElementById("inst-list");
+  const inst = document.getElementById("inst");
+  const list = document.createElement("ul");   // suggestion menu added to the page, like jQuery UI autocomplete
+  list.className = "ui-autocomplete"; list.hidden = true;
+  list.style.cssText = "position:fixed;z-index:9;list-style:none;margin:0;padding:4px 0;background:#fff;color:#111;border:1px solid #999";
+  document.body.append(list);
   const country = document.getElementById("country"), state = document.getElementById("state");
   function loadStates() {
     state.replaceChildren(new Option("Select State", ""));
@@ -50,8 +56,9 @@
   }
   inst.addEventListener("input", () => {
     const q = inst.value.toLowerCase();
+    const r = inst.getBoundingClientRect(); list.style.left = r.left + "px"; list.style.top = r.bottom + "px";
     list.replaceChildren(...SCHOOLS.filter(s => q && s.toLowerCase().includes(q)).map(s => {
-      const li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = s;
+      const li = document.createElement("li"); li.className = "ui-menu-item"; li.textContent = s; li.style.padding = "6px 10px";
       li.addEventListener("mousedown", e => { e.preventDefault(); inst.value = s; inst.dataset.chosen = s; list.hidden = true; });
       return li; }));
     list.hidden = !list.children.length;

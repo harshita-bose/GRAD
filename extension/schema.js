@@ -77,6 +77,15 @@ GF.SECTIONS = [
     { k: "start_date", label: "Start date", type: "date" },
     { k: "end_date", label: "End date", type: "date" },
   ] },
+  { id: "publications", title: "Publications", list: 6, hint: "Papers, conference talks, posters, preprints", fields: [
+    { k: "title", label: "Title of the paper" },
+    { k: "venue", label: "Conference / journal title" },
+    { k: "date", label: "Publication date", type: "date", hint: "If you only know the month, use the 1st" },
+    { k: "type", label: "Type", options: ["", "Conference paper", "Journal article", "Preprint", "Poster", "Book chapter", "Thesis", "Patent", "Other"] },
+    { k: "authors", label: "Authors", hint: "As listed on the paper" },
+    { k: "doi", label: "DOI / link" },
+    { k: "status", label: "Status", options: ["", "Published", "Accepted", "Under review", "In preparation"] },
+  ] },
   { id: "recommenders", title: "Recommenders", list: 4, fields: [
     { k: "prefix", label: "Prefix", options: ["", "Dr.", "Prof.", "Mr.", "Ms.", "Mrs."] },
     { k: "first_name", label: "First name" },
@@ -124,6 +133,13 @@ const EDU = "(education|institution|college|universit|school)";
 const EMP = "(employment|employer|work|job|company)";
 const rx = (s, f = "i") => new RegExp(s, f);
 GF.RULES = [
+  ["publications.*.type", /^publication .*\btype\b|publication type|type of (publication|paper|output)/i, "high"],
+  ["publications.*.date", /^publication .*\b(date|year|month|published on)\b|publication date|date of publication|date published|year of publication/i, "high"],
+  ["publications.*.venue", /^publication .*(conference|journal|venue|proceedings|published in|publisher|source|event)|conference (title|name)|journal (title|name)|name of (the )?(conference|journal)|venue/i, "high"],
+  ["publications.*.authors", /^publication .*\bauthors?\b|author list|co-?authors/i, "high"],
+  ["publications.*.doi", /^publication .*(doi|url|link)|\bdoi\b/i, "high"],
+  ["publications.*.status", /^publication .*status|publication status/i, "high"],
+  ["publications.*.title", /^publication .*\btitle\b|title of (the )?(paper|publication|article|talk|poster)|(paper|publication|article) title/i, "high"],
   ["recommenders.*.first_name", rx(`${REC}.*(first|given)|(first|given).*${REC}`), "high"],
   ["recommenders.*.last_name", rx(`${REC}.*(last|family|sur)|(last|family).*${REC}`), "high"],
   ["recommenders.*.email", rx(`${REC}.*e-?mail`), "high"],
@@ -223,6 +239,7 @@ GF.OTHER_PERSON = /emergency|parent|guardian|father|mother|next of kin|spouse|pa
 GF.HEADINGS = [
   ["other", /emergency|parent|guardian|father|mother|family (information|details|background)|next of kin|spouse|sponsor|financial support/i, "other person"],
   ["recommenders", /recommend|referee|reference|evaluator|letter writer/i, "recommender"],
+  ["publications", /publication|\bpapers?\b|research output|conference|journal|presentations?|preprint|poster/i, "publication"],
   ["education", /education|academic (history|record|background)|institution|colleges?( attended)?$|universit(y|ies)( attended)?$|schools? attended|prior degree/i, "education"],
   ["employment", /employment|work experience|professional experience|\bjob\b|employer/i, "employment"],
   ["citizenship", /citizenship|nationality|immigration|visa/i, "citizenship"],

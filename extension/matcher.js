@@ -112,6 +112,12 @@ var GF = globalThis.GF;
     [/^(m\.?\s?sc?\.?|ms|master of science)$/i, ["Master of Science", "M.S.", "M.Sc.", "Master's degree", "Master's", "Masters", "Master"]],
     [/^(ph\.?\s?d\.?|doctorate)$/i, ["Doctor of Philosophy", "Ph.D.", "PhD", "Doctorate", "Doctoral"]],
   ];
+  const PUB_TYPES = {
+    "conference paper": ["Conference paper", "Conference", "Conference proceedings", "Conference publication", "Proceedings", "Conference presentation"],
+    "journal article": ["Journal article", "Journal", "Journal publication", "Peer-reviewed article", "Article"],
+    "preprint": ["Preprint", "Working paper", "arXiv"], "poster": ["Poster", "Poster presentation"],
+    "book chapter": ["Book chapter", "Chapter", "Book"], "thesis": ["Thesis", "Dissertation"], "patent": ["Patent"],
+  };
   const SEX = { female: ["Female", "F", "Woman"], male: ["Male", "M", "Man"], x: ["X", "Non-binary", "Another", "Other"] };
   const YESNO = { yes: ["Yes", "Y", "True"], no: ["No", "N", "False"] };
   const PREFIX = { "dr.": ["Dr.", "Dr", "Doctor"], "prof.": ["Prof.", "Prof", "Professor"], "mr.": ["Mr.", "Mr"], "ms.": ["Ms.", "Ms"], "mrs.": ["Mrs.", "Mrs"] };
@@ -134,6 +140,7 @@ var GF = globalThis.GF;
     if (/^(us_citizen|us_permanent_resident|visa_required|has_degree)$/.test(last)) out.push(...(YESNO[norm(value)] || []));
     if (last === "degree") for (const [rx, alts] of DEGREES) if (rx.test(value.trim())) out.push(...alts);
     if (last === "prefix") out.push(...(PREFIX[value.toLowerCase()] || []));
+    if (last === "type" && key.startsWith("publications")) out.push(...(PUB_TYPES[value.toLowerCase()] || []));
     return [...new Set(out)];
   };
 

@@ -239,7 +239,8 @@
     return v ? { value: String(v), path: key } : { err: "Empty in your details" };
   }
   const title = sec => (GF.SECTIONS.find(s => s.id === sec) || {}).title || sec;
-  const NAME_KEYS = { education: ["institution", "degree"], employment: ["employer", "title"], recommenders: ["first_name", "last_name"] };
+  const NAME_KEYS = { education: ["institution", "degree"], employment: ["employer", "title"], recommenders: ["first_name", "last_name"],
+    publications: ["title", "venue"] };
   const entryName = (sec, e) => (NAME_KEYS[sec] || []).map(k => e[k]).filter(Boolean).join(" · ") || "(empty)";
   function isDateKey(path) {
     const parts = path.split("."), sec = GF.SECTIONS.find(s => s.id === parts[0]);
@@ -362,8 +363,7 @@
     else if (r.list) {
       const filled = (S.profile[r.list] || []).filter(e => Object.values(e).some(Boolean)).length;
       if (S.chosen[r.list]) soft.push(`${title(r.list)} #${r.index + 1}, as you chose`);
-      else if (S.auto[r.list] === r.index) soft.push(`Your degree: ${title(r.list)} #${r.index + 1} (${entryName(r.list, S.profile[r.list][r.index])}) — change at the top if needed`);
-      else if (filled > 1) notes.push(`Which ${title(r.list).toLowerCase().replace(/s$/, "")}? Choose at the top of this panel (now showing #${r.index + 1})`);
+      else if (filled > 1) soft.push(`${title(r.list)} #${r.index + 1} (${entryName(r.list, S.profile[r.list][r.index])}) — switch at the top of the panel`);
     }
     if (/full_name$/.test(row.key)) soft.push("Full name built as first + middle + last — check the order this form wants");
     if (isDateKey(row.key)) {
@@ -404,7 +404,8 @@
       value = c.opt.text;
       const cur = f.group ? f.options.find(o => o.el.checked) : null;
       if (cur && cur !== c.opt) notes.push(`Currently "${cur.text}" — will be changed`);
-    } else if (f.combo) {
+    } else if (f.combo || (/^education\.\d+\.institution$/.test(row.key) && f.tag === "input")) {
+      f.combo = true; // institution boxes usually suggest names as you type: pick the matching one, else keep the text
       soft.push("Type-to-search list — GradFill types your value and picks the matching option");
       row.variants = variants;
     } else {
@@ -434,12 +435,17 @@
   }
 
   function plan() {
-    // forms asking for an institution mean post-secondary study: with exactly one degree saved, use it
+    // Which saved entry to use until you pick another in the panel: never ask, fill straight away.
+    // Education: your most recent degree (not Class XII / high school). Others: the first one you saved.
     S.auto = {};
-    const edu = (S.profile && S.profile.education) || [];
-    const degrees = edu.map((e, i) => [e, i]).filter(([e]) => Object.values(e).some(Boolean) &&
-      !GF.SCHOOL_LEVEL.test(`${e.degree} ${e.institution}`));
-    if (!S.chosen.education && degrees.length === 1) { S.auto.education = degrees[0][1]; S.ctx.education = degrees[0][1]; }
+    for (const sec of GF.LIST_SECTIONS) {
+      if (S.chosen[sec]) continue;
+      const filled = ((S.profile && S.profile[sec]) || []).map((e, i) => [e, i]).filter(([e]) => Object.values(e).some(Boolean));
+      if (!filled.length) continue;
+      const degree = sec === "education" && filled.find(([e]) => !GF.SCHOOL_LEVEL.test(`${e.degree} ${e.institution}`));
+      S.auto[sec] = (degree || filled[0])[1];
+      S.ctx[sec] = S.auto[sec];
+    }
     S.rows = scan().map(planField);
     S.rows.forEach((r, i) => (r.n = i + 1));
     // a single "Street" box and no line-2 box on the page: both address lines go in that one box
@@ -467,15 +473,20 @@
     for (let t = 0; t < ms; t += 100) { const v = fn(); if (v && v.length) return v; await sleep(100); }
     return fn() || [];
   }
-  function listOptions(el) {
+  const SUGGEST = "[role=option], [role=menuitem], .ui-menu-item, .ui-autocomplete li, .autocomplete-suggestion, .tt-suggestion, " +
+    ".select2-results__option, .pac-item, [class*=suggest] li, [class*=autocomplete] li, [class*=typeahead] li";
+  const suggestions = () => [...document.querySelectorAll(SUGGEST)].filter(o => !o.closest("#gradfill-host") && shown(o) &&
+    o.getAttribute("aria-disabled") !== "true" && !o.querySelector(SUGGEST));
+  // `before`: suggestion-like things already visible before typing (menus, nav links) — never picked
+  function listOptions(el, before) {
     const ids = [el.getAttribute("aria-controls"), el.getAttribute("aria-owns")].filter(Boolean).join(" ").split(/\s+/).filter(Boolean);
     const lists = ids.map(id => document.getElementById(id)).filter(Boolean);
-    const found = lists.length ? lists.flatMap(l => [...l.querySelectorAll("[role=option]")]) : [...document.querySelectorAll("[role=option]")];
-    return found.filter(o => !o.closest("#gradfill-host") && shown(o) && o.getAttribute("aria-disabled") !== "true")
-      .map(o => ({ text: clean(o.innerText), value: o.getAttribute("data-value") || "", el: o }));
+    const found = lists.length ? lists.flatMap(l => [...l.querySelectorAll(SUGGEST)]).filter(o => shown(o))
+      : suggestions().filter(o => !before.has(o));
+    return found.map(o => ({ text: clean(o.innerText), value: o.getAttribute("data-value") || "", el: o })).filter(o => o.text);
   }
   function press(e) {
-    for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"])
+    for (const t of ["mouseover", "mouseenter", "pointerdown", "mousedown", "pointerup", "mouseup", "click"])
       e.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window }));
   }
   // Type-to-search boxes: type your value, wait for the list, pick the option that clearly matches.
@@ -483,9 +494,14 @@
     const el = r.f.el, variants = r.variants || [r.value], isInput = el.tagName === "INPUT";
     el.scrollIntoView({ block: "center" });
     el.focus();
-    if (isInput) { setNative(el, variants[0]); fire(el, "input"); } else press(el);
-    let opts = await waitFor(() => listOptions(el), 2500);
-    if (!opts.length && isInput) { press(el); opts = await waitFor(() => listOptions(el), 1500); }
+    const before = new Set(suggestions());
+    if (isInput) {
+      setNative(el, variants[0]); fire(el, "input");
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+      el.dispatchEvent(new KeyboardEvent("keyup", { key: "a", bubbles: true }));
+    } else press(el);
+    let opts = await waitFor(() => listOptions(el, before), 2500);
+    if (!opts.length && isInput) { press(el); opts = await waitFor(() => listOptions(el, before), 1500); }
     const c = GF.chooseOption(opts, variants);
     if ((!c.opt || !c.sure) && isInput && !el.closest("[role=combobox]:not(input)") && el.getAttribute("aria-autocomplete") !== "none") {
       // a search box that also takes typed text ("if your school is not listed, enter it manually")
@@ -721,13 +737,11 @@
       // rows whose entry comes from a numbered heading ("Recommender 2") don't follow the picker
       if (S.rows.filter(r => r.list === sec).every(r => r.f.section && r.f.section.sec === sec && r.f.section.index != null)) continue;
       const entries = S.profile[sec] || [];
-      const undecided = !S.chosen[sec] && S.auto[sec] == null && entries.filter(e => Object.values(e).some(Boolean)).length > 1;
-      const sel = h("select", { "aria-label": `Which ${title(sec).toLowerCase()} entry`, onchange: e => e.target.value !== "" && switchEntry(sec, Number(e.target.value)) },
-        undecided ? h("option", { value: "", selected: true }, "— choose —") : null,
-        entries.map((e, i) => h("option", { value: i, selected: !undecided && i === S.ctx[sec] },
-          `#${i + 1} ${entryName(sec, e)}`)));
-      const ask = { recommenders: "Which recommender is this page for?", education: "Which degree is this page about?", employment: "Which job is this page about?" }[sec];
-      bar.append(h("label", { class: sec === "recommenders" ? "pick" : "" }, ask, sel));
+      const sel = h("select", { "aria-label": `Which ${title(sec).toLowerCase()} entry`, onchange: e => switchEntry(sec, Number(e.target.value)) },
+        entries.map((e, i) => Object.values(e).some(Boolean) || i === S.ctx[sec]
+          ? h("option", { value: i, selected: i === S.ctx[sec] }, `#${i + 1} ${entryName(sec, e)}`) : null));
+      const ask = { recommenders: "Which recommender?", education: "Which education?", employment: "Which job?", publications: "Which publication?" }[sec];
+      bar.append(h("label", { class: "pick" }, ask, sel));
     }
     if (needsActive) {
       const sel = h("select", { onchange: e => { S.active = e.target.value || null; replan(); } },

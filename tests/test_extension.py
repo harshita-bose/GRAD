@@ -28,6 +28,10 @@ PROFILE = {
                    "start_date": "2023-08-01", "end_date": "2027-05-31", "gpa": "8.75", "gpa_scale": "10"},
                   {"institution": "Delhi Public School", "degree": "Class XII (CBSE)", "end_date": "2023-05-31"}, {}],
     "employment": [{}, {}, {}],
+    "publications": [{"title": "Low-loss silicon nitride waveguides", "venue": "CLEO 2025", "date": "2025-05-12",
+                      "type": "Conference paper", "authors": "H. Bose, S. Das"},
+                     {"title": "Inverse-designed grating couplers", "venue": "Optics Letters", "date": "2026-02-01",
+                      "type": "Journal article", "authors": "H. Bose"}, {}, {}, {}, {}],
     "recommenders": [{"prefix": "Dr.", "first_name": "Asha", "last_name": "Rao", "email": "asha@dtu.ac.in", "title": "Professor",
                       "institution": "Delhi Technological University", "phone": "+91 98991 30814", "relationship": "Thesis supervisor"},
                      {"first_name": "Tim", "last_name": "Schroeder", "title": "Professor",
@@ -102,6 +106,7 @@ def main():
         assert back["profile"]["personal"]["first_name"] == "Restored"
         assert back["profile"]["recommenders"][0]["first_name"] == "Old" and back["profile"]["recommenders"][0]["country"] == ""
         assert len(back["profile"]["recommenders"]) == 4 and back["tracker"]["applications"][0]["school"] == "UCI"
+        assert len(back["profile"]["publications"]) == 6  # new section added empty; nothing else touched
         expect(settings.locator("#sec-personal [data-k=first_name]")).to_have_value("Restored")
         settings.fill('#sec-personal [data-k=first_name]', "Typed")
         settings.fill('#sec-contact [data-k=phone]', "98000")  # no country code → a doubt
@@ -225,25 +230,40 @@ def main():
                        "sm": "08", "sd": "01", "sy": "2023", "em": "05", "ed": "31", "ey": "2027", "level": "Undergraduate"}, got
         assert page.get_attribute("#inst", "data-chosen") == "Delhi Technological University"  # picked from the suggestions
         assert page.is_checked("[name=deg_yes]") and not page.is_checked("[name=deg_no]")
-        assert "Which education" not in panel(page).inner_text()  # never asked: only one post-secondary entry
+        assert page.evaluate("document.body.dataset.nav") is None  # the site menu was never clicked
+        expect(panel(page).locator("label.pick", has_text="Which education?").locator("select")).to_have_value("0")
         assert panel(page).locator(".card.flag").count() == 0, panel(page).locator(".card.flag").all_inner_texts()
+
+        # --- publications: #1 straight away, the panel's dropdown switches to another paper
+        page.goto(base + "/practice/publications.html")
+        open_gradfill(sw)
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 6 field(s)")
+        got = {k: page.input_value(sel) for k, sel in {"type": "#ptype", "title": "#ptitle", "venue": "#pvenue",
+               "m": "[name=pm]", "y": "[name=py]", "auth": "#pauth"}.items()}
+        assert got == {"type": "Conference Proceedings", "title": "Low-loss silicon nitride waveguides", "venue": "CLEO 2025",
+                       "m": "5", "y": "2025", "auth": "H. Bose, S. Das"}, got
+        pubs = panel(page).locator("label.pick", has_text="Which publication?").locator("select")
+        pubs.select_option("1")
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 6 field(s)")
+        got = {k: page.input_value(sel) for k, sel in {"type": "#ptype", "title": "#ptitle", "venue": "#pvenue",
+               "m": "[name=pm]", "y": "[name=py]", "auth": "#pauth"}.items()}
+        assert got == {"type": "Journal Article", "title": "Inverse-designed grating couplers", "venue": "Optics Letters",
+                       "m": "2", "y": "2026", "auth": "H. Bose"}, got
 
         # --- a recommender pop-up (like Princeton's): never the applicant's name; you choose the recommender
         page.goto(base + "/practice/recommender.html")
         open_gradfill(sw)
         expect(panel(page)).to_be_visible()
-        picker = panel(page).locator("label.pick select")
-        expect(picker).to_have_value("")  # two recommenders saved: GradFill asks which one
-        assert page.input_value("#rf") == "" and page.input_value("#rl") == ""  # never "Test" / "Applicant"
+        picker = panel(page).locator("label.pick", has_text="Which recommender?").locator("select")
+        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 8 field(s)")  # recommender #1 straight away
+        expect(picker).to_have_value("0")
         assert "manual" in card(page, "waive your right").get_attribute("class")
-        picker.select_option("0")
-        expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 8 field(s)")
         got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
         assert got == {"prefix": "Dr.", "rf": "Asha", "rl": "Rao", "org": "Delhi Technological University", "pos": "Professor",
                        "rel": "Thesis supervisor", "tel": "+91 98991 30814", "em": "asha@dtu.ac.in"}, got
         if os.environ.get("GF_SHOTS"):
             page.screenshot(path=os.path.join(os.environ["GF_SHOTS"], "recommender.png"))
-        panel(page).locator("label.pick select").select_option("1")  # switch to recommender #2
+        picker.select_option("1")  # switch to recommender #2
         expect(panel(page).locator(".msg")).to_contain_text("Filled and checked 3 field(s)")  # "Professor" stays as is
         got = {k: page.input_value(f"#{k}") for k in ["prefix", "rf", "rl", "org", "pos", "rel", "tel", "em"]}
         assert got == {"prefix": "", "rf": "Tim", "rl": "Schroeder", "org": "Humboldt University of Berlin", "pos": "Professor",

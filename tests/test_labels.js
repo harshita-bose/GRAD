@@ -44,12 +44,20 @@ const cases = [
   ["Relationship to applicant", "recommender", "", "", "text", "recommenders.*.relationship", true],
   ["", "", "fname", "", "text", "personal.first_name", true],
   ["", "", "q1234", "given-name", "text", "personal.first_name", true],
+  ["Title", "publication", "", "", "text", "publications.*.title", true],
+  ["Type", "publication", "", "", "select", "publications.*.type", true],
+  ["Date", "publication", "", "", "text", "publications.*.date", true],
+  ["Conference/Journal Name", "publication", "", "", "text", "publications.*.venue", true],
+  ["Title of paper", "", "", "", "text", "publications.*.title", true],
+  ["Conference title", "", "", "", "text", "publications.*.venue", true],
+  ["Publication date", "", "", "", "text", "publications.*.date", true],
+  ["Title", "recommender", "", "", "text", "recommenders.*.title", true],
   ["Program of interest", "", "", "", "select", null, false],
   ["Term of entry", "", "", "", "select", null, false],
 ];
 let bad = 0;
 for (const [label, word, name, ac, type, want, auto] of cases) {
-  const f = { label, name, id: "", autocomplete: ac, type, section: word ? { word, sec: { recommender: "recommenders", education: "education", address: "address", citizenship: "citizenship", "other person": "other" }[word] } : null };
+  const f = { label, name, id: "", autocomplete: ac, type, section: word ? { word, sec: { recommender: "recommenders", education: "education", address: "address", citizenship: "citizenship", "other person": "other", publication: "publications" }[word] } : null };
   const got = GF.pickKey(f, (word ? word + " " : "") + label);
   const key = got ? got.key : null, fills = !!got && got.conf !== "low";
   const ok = key === want && (want === null || fills === auto);

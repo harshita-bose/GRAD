@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Portal Publications</title>
+<link rel="stylesheet" href="../tracker.css">
+<style>
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .ui-dialog { background: var(--card); color: var(--ink); width: min(660px, 100%); border-radius: 6px; }
+  .ui-dialog-titlebar { background: var(--chip); padding: 10px 14px; font-weight: 700; }
+  .ui-dialog-content { padding: 14px; }
+  table.plain td { padding: 4px 8px; vertical-align: top; } table.plain td:first-child { width: 170px; }
+  table.plain input, table.plain textarea { width: 360px; max-width: 100%; } table.plain select { width: auto; }
+</style>
+</head>
+<body>
+<header><b>Practice University — Graduate Application</b><span class="sub">Practice only. Nothing you type leaves this tab.</span></header>
+<main><h2>Research</h2><p>An “Add Publication” pop-up with a type list and a month / year date.</p></main>
+<div class="overlay">
+  <div class="ui-dialog" role="dialog" aria-labelledby="pub-title">
+    <div class="ui-dialog-titlebar"><span id="pub-title" class="ui-dialog-title">Add Publication</span></div>
+    <form class="ui-dialog-content" onsubmit="event.preventDefault()">
+      <table class="plain"><tbody>
+        <tr><td><label for="ptype">Type</label></td><td><select id="ptype"><option value=""></option><option>Journal Article</option><option>Conference Proceedings</option><option>Book Chapter</option><option>Other</option></select></td></tr>
+        <tr><td><label for="ptitle">Title</label></td><td><input id="ptitle"></td></tr>
+        <tr><td><label for="pvenue">Conference/Journal Name</label></td><td><input id="pvenue"></td></tr>
+        <tr><td><label>Publication Date</label></td><td><select name="pm"><option value=""></option><option value='1'>January</option><option value='2'>February</option><option value='3'>March</option><option value='4'>April</option><option value='5'>May</option><option value='6'>June</option><option value='7'>July</option><option value='8'>August</option><option value='9'>September</option><option value='10'>October</option><option value='11'>November</option><option value='12'>December</option></select> <select name="py"><option value=""></option><option value='2027'>2027</option><option value='2026'>2026</option><option value='2025'>2025</option><option value='2024'>2024</option><option value='2023'>2023</option><option value='2022'>2022</option><option value='2021'>2021</option><option value='2020'>2020</option><option value='2019'>2019</option><option value='2018'>2018</option><option value='2017'>2017</option><option value='2016'>2016</option></select></td></tr>
+        <tr><td><label for="pauth">Authors</label></td><td><textarea id="pauth" rows="2"></textarea></td></tr>
+      </tbody></table>
+      <p><button type="button" class="button">Save</button> <button type="button">Cancel</button></p>
+    </form>
+  </div>
+</div>
+</body>
+</html>
