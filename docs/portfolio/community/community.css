@@ -71,7 +71,8 @@ ul.did b { color: var(--fg); font-weight: 500; }
 a.doc:hover { border-color: var(--accent); }
 .doc .thumb { aspect-ratio: 4 / 3; background: var(--bg); border-bottom: 1px solid var(--line);
   display: grid; place-items: center; font: 400 .8rem/1 var(--mono); color: var(--faint); }
-.doc .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.doc .thumb { position: relative; overflow: hidden; }
+.doc .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .doc .cap { padding: .8rem .9rem 1rem; }
 .doc .cap b { display: block; font-weight: 500; font-size: .95rem; }
 .doc .cap span { font: 400 .72rem/1.4 var(--mono); color: var(--faint); }
