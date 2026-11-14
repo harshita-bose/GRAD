@@ -243,6 +243,22 @@ h2 { font: 400 var(--step-3)/1.1 var(--display); margin: 0; letter-spacing: -.01
 .langs li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px dashed var(--line); padding-bottom: .5rem; }
 .langs li span:last-child { color: var(--muted); font-size: .9rem; }
 
+/* community engagement & leadership: each card opens the activity's own page */
+#community .kicker { line-height: 1.4; }
+.acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
+.act { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  text-decoration: none; color: var(--fg); background: var(--bg); transition: border-color .2s, background .2s; }
+.act:hover { border-color: var(--accent); background: var(--surface); }
+.act .pic { aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--surface); }
+.act .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.act .txt { padding: 1.1rem 1.2rem 1.25rem; display: flex; flex-direction: column; gap: .3rem; flex: 1; }
+.act .when { padding: 0; }
+.act h3 { font: 500 1.05rem/1.3 var(--body); margin: 0; }
+.act .org { margin: 0; font-size: .9rem; }
+.act p { margin: .35rem 0 0; color: var(--muted); font-size: .9rem; }
+.act .more { margin-top: auto; padding-top: .9rem; font: 500 .78rem/1 var(--mono); color: var(--accent-soft); }
+.act:hover .more { color: var(--fg); }
+
 /* education */
 .edu { display: grid; gap: 0; }
 .edu .entry h3 { font-size: 1.08rem; }
@@ -275,6 +291,7 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
       <a href="#publications">Publications</a>
       <a href="#skills">Skills</a>
       <a href="#honours">Honours</a>
+      <a href="#community">Community</a>
       <a href="#beyond">Leadership</a>
       <a href="#contact">Contact</a>
     </nav>
@@ -502,6 +519,41 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
             <div class="when">2009 – 2023</div>
             <div><h3>Delhi Public School, R. K. Puram</h3><p>CBSE Class XII: 93%. Gold Medal for Academic Excellence; Scholar Badge for 7 consecutive years; Blue Blazer awardee.</p></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY ENGAGEMENT & LEADERSHIP -->
+  <section class="block" id="community">
+    <div class="wrap head">
+      <header>
+        <p class="kicker">Community engagement &amp; leadership</p>
+        <h2>Sharing science, building community</h2>
+        <p>Outreach and initiatives outside the lab. Each one opens a page with the full story and supporting documents.</p>
+      </header>
+      <div class="body">
+        <div class="acts">
+          <a class="act" href="community/lndw.html">
+            <div class="pic"><img src="community/docs/lndw/spectrometer-station.jpg" alt="" loading="lazy"></div>
+            <div class="txt">
+              <span class="when">6 June 2026</span>
+              <h3>Berlin Long Night of the Sciences 2026</h3>
+              <p class="org">IQP, Humboldt-Universität zu Berlin</p>
+              <p>Helped families and young children build their own CD spectrometers and introduced the ideas behind spectroscopy.</p>
+              <span class="more">Read more and see photos →</span>
+            </div>
+          </a>
+          <a class="act" href="community/menaura.html">
+            <div class="pic"><img src="community/docs/menaura/menaura-pitch-deck-cover.jpg" alt="" loading="lazy"></div>
+            <div class="txt">
+              <span class="when">2020 – 2021</span>
+              <h3>Co-founder, Menaura</h3>
+              <p class="org">Diamond Challenge</p>
+              <p>Co-founded a venture concept to make mental-health support more accessible and reduce stigma.</p>
+              <span class="more">Read more and see the pitch deck →</span>
+            </div>
+          </a>
         </div>
       </div>
     </div>
