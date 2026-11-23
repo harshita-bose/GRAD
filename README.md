@@ -142,3 +142,32 @@ To change it, edit `docs/portfolio/index.html` on the default branch (on github.
 file, click the pencil icon, commit). To replace the CV or photo, upload a new file with the same
 name (`Harshita_Bose_CV.pdf` or `harshita.jpg`) into `docs/portfolio/`. Every commit to the
 default branch redeploys the site within a minute or two; the **Actions** tab shows each deploy.
+
+## Final formatting for an SOP / Personal History Statement
+
+`tools/sop_format.py` does the last formatting pass on a finished `.docx`. It never edits your
+wording; it only changes:
+
+- every piece of text to **Times New Roman**;
+- the title ("Statement of Purpose" / "Personal History Statement") to **14 pt**, section headings
+  (Word "Heading" styles, or short bold/underlined lines on their own) to **12 pt**, everything
+  else to **11 pt**;
+- the space after a sentence-ending full stop to **two spaces** (abbreviations such as "Dr.",
+  "e.g.", "Ph.D." and initials keep one space and are listed for you to check).
+
+Before saving, it compares the old and new text and refuses to save if anything other than those
+extra spaces differs. Your original file is never changed; the result is saved next to it as
+`<name>_formatted.docx`.
+
+Needs Python 3 with `lxml` (`pip install lxml`).
+
+```bash
+python3 tools/sop_format.py SOP.docx --dry-run
+```
+
+```bash
+python3 tools/sop_format.py SOP.docx
+```
+
+If a heading is missed or a line is wrongly treated as a heading, add `--heading "Exact text"` or
+`--not-heading "Exact text"`. Use `--no-sentence-spacing` to change only fonts and sizes.

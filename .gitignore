@@ -2,3 +2,5 @@
 gradfill-backup-*.json
 gradtrack-*.json
 __pycache__/
+# personal SOP / PHS drafts — never commit
+*.docx
